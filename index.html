@@ -595,8 +595,8 @@ async function submitReview() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI',
-        'Authorization': 'Bearer sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI',
         'Prefer': 'return=representation'
       },
       body: JSON.stringify({ name: name, company: company, message: msg, rating: currentRating, approved: true })
@@ -637,8 +637,8 @@ async function loadLiveReviews() {
   try {
     var res = await fetch('https://oulckllygepbqbctzeka.supabase.co/rest/v1/testimonials?approved=eq.true&order=created_at.desc&limit=12', {
       headers: {
-        'apikey': 'sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI',
-        'Authorization': 'Bearer sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI'
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI'
       }
     });
     var reviews = await res.json();
@@ -989,8 +989,8 @@ async function submitForm(){
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'apikey':'sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI',
-        'Authorization':'Bearer sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI',
+        'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI',
+        'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI',
         'Prefer':'return=representation'
       },
       body:JSON.stringify({
