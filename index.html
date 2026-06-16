@@ -795,36 +795,89 @@ animBg();
 
 // ── WORLD MAP CANVAS ──
 var wc=document.getElementById('worldmap'),wctx=wc.getContext('2d'),wW,wH;
-function resizeMap(){wW=wc.width=wc.offsetWidth;wH=wc.height=380;}
-resizeMap();window.addEventListener('resize',resizeMap);
-var locs={china:{x:.78,y:.32,label:'China 🇨🇳'},southafrica:{x:.52,y:.65,label:'South Africa 🇿🇦'},eswatini:{x:.54,y:.67,label:'Eswatini 🇸🇿'},mozambique:{x:.56,y:.62,label:'Mozambique 🇲🇿'},europe:{x:.48,y:.22,label:'Europe'},india:{x:.68,y:.40,label:'India'}};
+function resizeMap(){
+  var container=wc.parentElement;
+  wW=wc.width=container?container.offsetWidth||window.innerWidth:window.innerWidth;
+  wH=wc.height=400;
+}
+// Wait for full layout before first size
+window.addEventListener('load',function(){resizeMap();});
+setTimeout(resizeMap,200);
+window.addEventListener('resize',resizeMap);
+
+// Locations mapped as fraction of FULL canvas width (0=left edge, 1=right edge)
+// Real approximate world map positions spread across the full width
+var locs={
+  eswatini: {x:0.53, y:0.69, label:'Eswatini 🇸🇿', main:true,  col:'rgba(192,57,43,'},
+  southafrica:{x:0.51, y:0.72, label:'South Africa 🇿🇦',main:true, col:'rgba(138,43,226,'},
+  mozambique:{x:0.56, y:0.65, label:'Mozambique 🇲🇿', main:true,  col:'rgba(200,48,200,'},
+  india:     {x:0.70, y:0.40, label:'India 🇮🇳',       main:false, col:'rgba(0,212,255,'},
+  china:     {x:0.80, y:0.28, label:'China 🇨🇳',        main:true,  col:'rgba(0,170,255,'},
+  europe:    {x:0.47, y:0.18, label:'Europe 🌍',         main:false, col:'rgba(100,160,255,'},
+  usa:       {x:0.18, y:0.30, label:'USA 🇺🇸',           main:false, col:'rgba(80,180,120,'},
+  brazil:    {x:0.28, y:0.60, label:'Brazil 🇧🇷',        main:false, col:'rgba(80,200,100,'},
+  uae:       {x:0.62, y:0.38, label:'UAE 🇦🇪',           main:false, col:'rgba(240,180,60,'}
+};
+var routes=[
+  [locs.china,      locs.southafrica, 'rgba(138,43,226,'],
+  [locs.china,      locs.mozambique,  'rgba(0,212,255,'],
+  [locs.china,      locs.eswatini,    'rgba(192,57,43,'],
+  [locs.india,      locs.eswatini,    'rgba(200,48,200,'],
+  [locs.india,      locs.southafrica, 'rgba(0,170,255,'],
+  [locs.europe,     locs.southafrica, 'rgba(100,160,255,'],
+  [locs.uae,        locs.southafrica, 'rgba(240,180,60,'],
+  [locs.eswatini,   locs.southafrica, 'rgba(255,120,80,']
+];
 var trailP=0;
 function drawMap(){
+  if(!wW||wW<100){requestAnimationFrame(drawMap);return;}
   wctx.clearRect(0,0,wW,wH);
-  wctx.fillStyle='rgba(6,10,16,1)';wctx.fillRect(0,0,wW,wH);
-  wctx.strokeStyle='rgba(20,30,55,0.5)';wctx.lineWidth=.5;
-  for(var x=0;x<wW;x+=40){wctx.beginPath();wctx.moveTo(x,0);wctx.lineTo(x,wH);wctx.stroke();}
-  for(var y=0;y<wH;y+=40){wctx.beginPath();wctx.moveTo(0,y);wctx.lineTo(wW,y);wctx.stroke();}
-  var routes=[[locs.china,locs.southafrica,'rgba(138,43,226,'],[locs.china,locs.mozambique,'rgba(0,212,255,'],[locs.india,locs.eswatini,'rgba(200,48,200,'],[locs.europe,locs.southafrica,'rgba(0,170,255,'],[locs.china,locs.eswatini,'rgba(192,57,43,']];
-  trailP=(trailP+0.005)%1;
+  // Background
+  wctx.fillStyle='#060a10';wctx.fillRect(0,0,wW,wH);
+  // Grid
+  wctx.strokeStyle='rgba(20,35,60,0.6)';wctx.lineWidth=0.5;
+  for(var gx=0;gx<wW;gx+=60){wctx.beginPath();wctx.moveTo(gx,0);wctx.lineTo(gx,wH);wctx.stroke();}
+  for(var gy=0;gy<wH;gy+=60){wctx.beginPath();wctx.moveTo(0,gy);wctx.lineTo(wW,gy);wctx.stroke();}
+  // Longitude/latitude visual guides
+  wctx.strokeStyle='rgba(138,43,226,0.06)';wctx.lineWidth=1;
+  [0.15,0.3,0.5,0.7,0.85].forEach(function(xf){wctx.beginPath();wctx.moveTo(xf*wW,0);wctx.lineTo(xf*wW,wH);wctx.stroke();});
+  [0.2,0.4,0.6,0.8].forEach(function(yf){wctx.beginPath();wctx.moveTo(0,yf*wH);wctx.lineTo(wW,yf*wH);wctx.stroke();});
+
+  trailP=(trailP+0.004)%1;
+  // Draw routes
   routes.forEach(function(r,idx){
-    var x1=r[0].x*wW,y1=r[0].y*wH,x2=r[1].x*wW,y2=r[1].y*wH,cpx=(x1+x2)/2,cpy=Math.min(y1,y2)-80;
-    wctx.beginPath();wctx.moveTo(x1,y1);wctx.quadraticCurveTo(cpx,cpy,x2,y2);wctx.strokeStyle=r[2]+'0.15)';wctx.lineWidth=1;wctx.stroke();
-    var tp=(trailP+idx*0.2)%1,t=tp;
-    var tx=(1-t)*(1-t)*x1+2*(1-t)*t*cpx+t*t*x2,ty=(1-t)*(1-t)*y1+2*(1-t)*t*cpy+t*t*y2;
-    var grad=wctx.createRadialGradient(tx,ty,0,tx,ty,8);grad.addColorStop(0,r[2]+'0.9)');grad.addColorStop(1,r[2]+'0)');
-    wctx.beginPath();wctx.arc(tx,ty,6,0,Math.PI*2);wctx.fillStyle=grad;wctx.fill();
+    var x1=r[0].x*wW,y1=r[0].y*wH,x2=r[1].x*wW,y2=r[1].y*wH;
+    var cpx=(x1+x2)/2,cpy=Math.min(y1,y2)-(Math.abs(x2-x1)*0.35+40);
+    // Route line
+    wctx.beginPath();wctx.moveTo(x1,y1);wctx.quadraticCurveTo(cpx,cpy,x2,y2);
+    wctx.strokeStyle=r[2]+'0.18)';wctx.lineWidth=1.2;wctx.setLineDash([4,6]);wctx.stroke();wctx.setLineDash([]);
+    // Animated travelling dot
+    var t=(trailP+idx*0.13)%1;
+    var tx=(1-t)*(1-t)*x1+2*(1-t)*t*cpx+t*t*x2;
+    var ty=(1-t)*(1-t)*y1+2*(1-t)*t*cpy+t*t*y2;
+    var grad=wctx.createRadialGradient(tx,ty,0,tx,ty,9);
+    grad.addColorStop(0,r[2]+'1)');grad.addColorStop(0.4,r[2]+'0.4)');grad.addColorStop(1,r[2]+'0)');
+    wctx.beginPath();wctx.arc(tx,ty,7,0,Math.PI*2);wctx.fillStyle=grad;wctx.fill();
   });
-  Object.values(locs).forEach(function(loc){
-    var x=loc.x*wW,y=loc.y*wH;
-    var isMain=['china','southafrica','eswatini','mozambique'].some(function(k){return locs[k]===loc;});
-    if(isMain){wctx.beginPath();wctx.arc(x,y,12,0,Math.PI*2);wctx.fillStyle='rgba(138,43,226,0.08)';wctx.fill();}
-    wctx.beginPath();wctx.arc(x,y,isMain?5:3,0,Math.PI*2);wctx.fillStyle=isMain?'#8a2be2':'rgba(0,212,255,0.5)';wctx.fill();
-    if(isMain){wctx.strokeStyle='rgba(138,43,226,0.4)';wctx.lineWidth=1.5;wctx.stroke();}
-    wctx.fillStyle=isMain?'rgba(200,160,255,0.9)':'rgba(170,180,192,0.6)';
-    wctx.font=(isMain?'600 11px':'500 10px')+' Space Grotesk,sans-serif';
-    wctx.fillText(loc.label,x+10,y+4);
+
+  // Draw location nodes
+  Object.keys(locs).forEach(function(k){
+    var loc=locs[k],x=loc.x*wW,y=loc.y*wH,isMain=loc.main;
+    // Outer glow
+    var glow=wctx.createRadialGradient(x,y,0,x,y,isMain?20:12);
+    glow.addColorStop(0,loc.col+(isMain?'0.2)':'0.12)'));glow.addColorStop(1,loc.col+'0)');
+    wctx.beginPath();wctx.arc(x,y,isMain?20:12,0,Math.PI*2);wctx.fillStyle=glow;wctx.fill();
+    // Dot
+    wctx.beginPath();wctx.arc(x,y,isMain?6:3.5,0,Math.PI*2);
+    wctx.fillStyle=loc.col+(isMain?'1)':'0.7)');wctx.fill();
+    if(isMain){wctx.strokeStyle=loc.col+'0.5)';wctx.lineWidth=1.5;wctx.stroke();}
+    // Label
+    wctx.fillStyle=isMain?'rgba(220,200,255,0.95)':'rgba(160,180,200,0.7)';
+    wctx.font=(isMain?'700 12px':'500 10px')+' Space Grotesk,sans-serif';
+    var lx=x+(x>wW*0.85?-90:12),ly=y+(y>wH*0.8?-10:4);
+    wctx.fillText(loc.label,lx,ly);
   });
+
   requestAnimationFrame(drawMap);
 }
 drawMap();
