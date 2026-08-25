@@ -1,230 +1,1715 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="GoProcures AI procurement assistant">
-<title>GoProcures AI | Procurement Intelligence</title>
-<style>
-:root{--bg:#05070c;--panel:#0c111b;--line:rgba(255,255,255,.1);--text:#f7f8fb;--muted:#9ba5b7;--purple:#9b5cff;--blue:#45a7ff;--green:#48f29b}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 28%,rgba(120,55,210,.18),transparent 32%),radial-gradient(circle at 10% 80%,rgba(0,120,255,.08),transparent 28%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
-button,input{font:inherit}button{cursor:pointer}.grid{position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:55px 55px;mask-image:radial-gradient(circle,#000 20%,transparent 78%)}
-header{position:fixed;z-index:20;top:0;left:0;right:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(5,7,12,.7);backdrop-filter:blur(18px)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800}.mark{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,var(--purple),var(--blue));font-size:12px}.brand em{font-style:normal;color:#b98cff}.online{display:flex;align-items:center;gap:8px;color:#7e899d;font-size:10px;font-weight:800;letter-spacing:1.7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s infinite}
-@keyframes pulse{50%{opacity:.4;transform:scale(.7)}}main{position:relative;z-index:2}.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:115px 18px 60px}.inner{width:min(900px,100%)}.eyebrow{display:inline-flex;gap:9px;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.035);color:#9ca6b8;font-size:10px;font-weight:800;letter-spacing:2px;margin-bottom:22px}.eyebrow b{color:var(--green)}
-h1{margin:0;font-size:clamp(48px,8vw,88px);line-height:.95;letter-spacing:-5px;font-weight:850}h1 span{background:linear-gradient(90deg,#fff,#b477ff 48%,#5ab5ff);-webkit-background-clip:text;background-clip:text;color:transparent}.subtitle{max-width:650px;margin:28px auto 0;color:var(--muted);font-size:17px;line-height:1.7}
-.core{position:relative;width:190px;height:190px;margin:34px auto 27px;display:grid;place-items:center}.ring{position:absolute;border:1px solid rgba(158,91,255,.25);border-radius:50%}.r1{inset:10px;border-left-color:var(--purple);animation:spin 11s linear infinite}.r2{inset:31px;border-top-color:var(--blue);animation:spin 8s linear infinite reverse}.r3{inset:52px;border-right-color:#fff8;animation:spin 5s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.center{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;position:relative;z-index:3;background:radial-gradient(circle,rgba(166,101,255,.42),rgba(15,12,28,.96));border:1px solid #be8cffaa;box-shadow:0 0 45px #8746f066,inset 0 0 20px #8746f044;font-size:13px;font-weight:900;letter-spacing:2px}.center:after{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px solid #a665ff38;animation:expand 2.5s ease-out infinite}@keyframes expand{to{transform:scale(1.6);opacity:0}}
-.p{position:absolute;width:4px;height:4px;border-radius:50%;background:#b889ff;box-shadow:0 0 12px #9b5cff;animation:float 3.5s ease-in-out infinite}.p1{top:0;left:42%}.p2{top:18%;right:5%;animation-delay:.4s}.p3{bottom:17%;right:1%;animation-delay:.8s}.p4{bottom:0;left:45%;animation-delay:1.2s}.p5{bottom:18%;left:5%;animation-delay:1.6s}.p6{top:20%;left:0;animation-delay:2s}.p7{top:48%;right:-2%;animation-delay:2.4s}.p8{top:48%;left:-2%;animation-delay:2.8s}@keyframes float{50%{transform:translateY(-12px);opacity:1}}
-.talk{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-width:250px;padding:16px 24px;border:1px solid #ad74ff77;border-radius:14px;color:#fff;background:linear-gradient(135deg,#8d46e656,#3065be30);font-weight:800;transition:.2s}.talk:hover{transform:translateY(-2px);border-color:#c8a0ffcc}.talk.listening{border-color:#48f29baa;box-shadow:0 0 35px #48f29b1f}.mic{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#ffffff14}.or{margin:14px 0;color:#4f586a;font-size:9px;font-weight:800;letter-spacing:3px}
-.composer{width:min(680px,100%);margin:auto;display:flex;gap:5px;padding:5px;border:1px solid var(--line);border-radius:16px;background:#ffffff0b;box-shadow:0 18px 55px #00000040}.composer:focus-within{border-color:#a064ff8c}.composer input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;padding:15px 16px}.composer input::placeholder{color:#596276}.send{width:48px;height:48px;border:0;border-radius:12px;color:#fff;background:linear-gradient(135deg,#8d48e7,#416fe2);font-size:21px;font-weight:800}.chips{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px}.chip{border:1px solid #ffffff12;background:#ffffff06;color:#7f899b;border-radius:9px;padding:7px 10px;font-size:10px}.chip:hover{color:#fff;border-color:#a064ff66}.trust{margin-top:26px;color:#4f586a;font-size:10px}
-.panel{display:none;width:min(760px,100%);margin:22px auto 0;text-align:left;border:1px solid var(--line);border-radius:20px;background:#080b12e8;backdrop-filter:blur(18px);overflow:hidden;box-shadow:0 25px 80px #00000059}.panel.open{display:block}.head{padding:14px 17px;border-bottom:1px solid #ffffff0f;display:flex;justify-content:space-between;color:#8d97aa;font-size:10px;font-weight:800;letter-spacing:1.5px}.head span:last-child{color:var(--green)}.messages{max-height:320px;overflow:auto;padding:18px}.msg{display:flex;margin:9px 0}.msg.user{justify-content:flex-end}.bubble{max-width:80%;padding:11px 13px;border-radius:13px;font-size:13px;line-height:1.55;white-space:pre-wrap}.msg.ai .bubble{background:#8e50e619;border:1px solid #9b5cff29;color:#dfe4ee}.msg.user .bubble{background:#ffffff12;border:1px solid #ffffff12;color:#fff}.actions{display:none;gap:8px;padding:0 18px 18px}.actions.show{display:flex}.action{border:1px solid #ffffff17;background:#ffffff0b;color:#fff;border-radius:10px;padding:10px 14px;font-size:11px;font-weight:800}.primary{border-color:#9b5cff73;background:#8d46e63d}.success{display:none;width:min(680px,100%);margin:18px auto 0;padding:18px;border-radius:16px;border:1px solid #48f29b33;background:#48f29b0e;color:#cfeee0;text-align:left}.success.show{display:block}.success strong{color:#6ff2ad}.footer{border-top:1px solid #ffffff0f;padding:25px 30px;display:flex;justify-content:space-between;color:#555f72;font-size:10px}.footer a{color:#8d97aa;text-decoration:none}
-@media(max-width:650px){header{padding:0 16px}.online{display:none}.hero{padding:105px 14px 55px}h1{font-size:48px;letter-spacing:-3px}.subtitle{font-size:15px}.core{transform:scale(.9)}.bubble{max-width:88%}.footer{flex-direction:column}}
-</style>
-</head>
-<body>
-<div class="grid"></div>
-<header><div class="brand"><div class="mark">GP</div><div>Go<em>Procures</em></div></div><div class="online"><span class="dot"></span>AI PROCUREMENT AGENT</div></header>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<main>
-<section class="hero">
-<div class="inner">
-<div class="eyebrow"><b>●</b> GOPROCURES AI · READY TO ASSIST</div>
-<h1>Procurement.<br><span>Intelligently handled.</span></h1>
-<p class="subtitle">Hi, I'm GoProcures. Tell me what you need to procure — by voice or text — and I'll help turn your requirement into a clear procurement request for our team.</p>
+  <meta
+    name="description"
+    content="GoProcures AI - Intelligent procurement handled."
+  >
 
-<div class="core" aria-hidden="true">
-<div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="center">AI</div>
-<i class="p p1"></i><i class="p p2"></i><i class="p p3"></i><i class="p p4"></i><i class="p p5"></i><i class="p p6"></i><i class="p p7"></i><i class="p p8"></i>
-</div>
+  <title>GoProcures AI | Procurement Intelligence</title>
 
-<button class="talk" id="talkButton" type="button"><span class="mic">🎙</span><span id="talkLabel">Talk to GoProcures</span></button>
-<div class="or">OR TYPE YOUR REQUIREMENT</div>
-
-<form class="composer" id="composer">
-<input id="requestInput" type="text" placeholder="e.g. I need 5,000 metres of 12-core fibre..." autocomplete="off">
-<button class="send" type="submit" aria-label="Send">→</button>
-</form>
-
-<div class="chips">
-<button class="chip" type="button" data-example="I need construction steel for a project.">Construction steel</button>
-<button class="chip" type="button" data-example="I need machine spares for an industrial plant.">Machine spares</button>
-<button class="chip" type="button" data-example="I need industrial equipment sourced from South Africa.">Industrial equipment</button>
-<button class="chip" type="button" data-example="I need a complete procurement list for a project.">Project procurement</button>
-</div>
-<div class="trust">🌍 Africa · South Africa · Eswatini · Mozambique · Global sourcing</div>
-
-<div class="panel" id="panel">
-<div class="head"><span>GOPROCURES AI</span><span>● ONLINE</span></div>
-<div class="messages" id="messages"></div>
-<div class="actions" id="actions">
-<button class="action primary" id="submitRequest" type="button">Submit Procurement Request</button>
-<button class="action" id="restart" type="button">Start Again</button>
-</div>
-</div>
-
-<div class="success" id="success"><strong>Request received.</strong><br>Our procurement agent will work on your requirement and compile a comparison between suitable suppliers to ensure you get the best deal possible. We will contact you through your preferred channel.</div>
-</div>
-</section>
-</main>
-
-<footer class="footer"><div>© 2026 GoProcures · You Ask, We Get.</div><a href="mailto:goprocures@outlook.com">goprocures@outlook.com</a></footer>
-
-<script>
-/* GoProcures AI frontend v1
-   - Voice input where browser supports Web Speech API
-   - Voice output through browser speech synthesis
-   - Temporary structured procurement intake
-   - Saves completed requests to the existing Supabase requests table
-   - Real LLM reasoning will be connected through a secure backend next.
-*/
-
-const SUPABASE_URL="https://oulckllygepbqbctzeka.supabase.co";
-/* IMPORTANT: paste the EXISTING Supabase anon/public key from your current index.html below.
-   Never put a service_role key or an AI secret key in this file. */
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91bGNrbGx5Z2VwYnFiY3R6ZWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjI5NTksImV4cCI6MjA5MDI5ODk1OX0.zBhM-KhjpAKsDNZf3zoSxuUSPe46e9uHGjLgcp4-cUI";
-
-const state={raw:"",name:"",email:"",phone:"",region:"",category:"",quantity:"",unit:"",budget:"",urgency:"",contact:"",step:0};
-
-const input=document.getElementById("requestInput");
-const panel=document.getElementById("panel");
-const messages=document.getElementById("messages");
-const actions=document.getElementById("actions");
-const success=document.getElementById("success");
-const talk=document.getElementById("talkButton");
-const talkLabel=document.getElementById("talkLabel");
-
-function say(text){
-  add("ai",text);
-  if("speechSynthesis" in window){
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.rate=.96;u.pitch=1;u.volume=1;
-    speechSynthesis.speak(u);
-  }
-}
-function add(type,text){
-  const row=document.createElement("div");row.className="msg "+type;
-  const b=document.createElement("div");b.className="bubble";b.textContent=text;
-  row.appendChild(b);messages.appendChild(row);messages.scrollTop=messages.scrollHeight;
-}
-function category(text){
-  const t=text.toLowerCase();
-  if(/steel|mesh|ibr|roof|cement|concrete|construction|rebar|reinforc/.test(t))return"Construction Materials";
-  if(/machine|machinery|spare|bearing|pump|compressor|motor|gearbox|industrial/.test(t))return"Industrial Machinery & Spares";
-  if(/fibre|fiber|router|mikrotik|network|cat6|cable|telecom/.test(t))return"ICT & Telecommunications";
-  if(/logistics|freight|shipping|transport|truck/.test(t))return"Logistics & Freight";
-  if(/solar|panel|inverter|battery|energy/.test(t))return"Energy & Solar";
-  return"General Procurement";
-}
-function qty(text){
-  const m=text.match(/(\d[\d,.\s]*)\s*(kg|kgs|tons?|tonnes?|m|metres?|meters?|pcs?|pieces?|units?|rolls?|drums?|sets?|boxes?)/i);
-  return m?{q:m[1].trim(),u:m[2].trim()}:{q:"",u:""};
-}
-function start(text){
-  panel.classList.add("open");
-  if(!messages.children.length)say("Hi, I'm GoProcures. I can help capture your procurement requirement. What do you need?");
-  if(text)process(text);
-}
-function process(text){
-  const t=text.trim();if(!t)return;
-  add("user",t);
-  state.raw=state.raw?state.raw+"\n"+t:t;
-  if(!state.category)state.category=category(t);
-  const q=qty(t);if(q.q){state.quantity=q.q;state.unit=q.u;}
-
-  if(state.step===0){
-    say("Got it. What is your name, and what company are you purchasing for?");
-    state.step=1;return;
-  }
-  if(state.step===1){
-    state.name=t;state.step=2;
-    say("Thanks, "+state.name+". What email address or WhatsApp number should we use to contact you?");
-    return;
-  }
-  if(state.step===2){
-    if(t.includes("@"))state.email=t;else state.phone=t;
-    state.step=3;say("Understood. Where should the goods be delivered?");return;
-  }
-  if(state.step===3){
-    state.region=t;state.step=4;
-    say("Perfect. Do you have a target budget or required delivery date? If not, say not specified.");return;
-  }
-  if(state.step===4){
-    if(!/^(not specified|no|none)$/i.test(t)){
-      if(/\$|usd|zar|rand|szl|budget/i.test(t))state.budget=t;else state.urgency=t;
+  <style>
+    :root {
+      --bg: #05060b;
+      --panel: #0b0c14;
+      --panel2: #10111c;
+      --border: rgba(255,255,255,.10);
+      --text: #f7f5ff;
+      --muted: #9293a8;
+      --purple: #9b5cff;
+      --blue: #5e9cff;
+      --green: #34e6a1;
+      --danger: #ff6b7a;
     }
-    state.step=5;say("One last thing: would you prefer us to contact you by WhatsApp or email?");return;
-  }
-  if(state.step===5){
-    const l=t.toLowerCase();
-    state.contact=l.includes("whatsapp")?"WhatsApp":l.includes("email")?"Email":t;
-    state.step=6;
-    say("Excellent. I have enough information to prepare your procurement request. Please review it and submit it to GoProcures.");
-    actions.classList.add("show");return;
-  }
-  say("Your procurement request is ready. Please use the Submit Procurement Request button.");
-}
-async function submit(){
-  if(SUPABASE_ANON_KEY.includes("PASTE_YOUR")){
-    alert("Before testing the database submission, paste your existing Supabase anon/public key into the marked line in this HTML. Do not use the service_role key.");
-    return;
-  }
-  const payload={
-    client_name:state.name||"Website AI Client",
-    client_email:state.email||"not-provided@goprocures.com",
-    client_phone:state.phone||"",
-    region:state.region||"Not specified",
-    request_text:state.raw||"",
-    status:"New",
-    summary:state.raw||"",
-    category:state.category||"General Procurement",
-    quantity:state.quantity||"",
-    unit:state.unit||"",
-    budget:state.budget||"",
-    urgency:state.urgency||"",
-    ai_summary:state.raw||"",
-    ai_tags:[state.category||"General Procurement","website-ai"],
-    parsed_at:new Date().toISOString()
-  };
-  const r=await fetch(SUPABASE_URL+"/rest/v1/requests",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "apikey":SUPABASE_ANON_KEY,
-      "Authorization":"Bearer "+SUPABASE_ANON_KEY,
-      "Prefer":"return=representation"
-    },
-    body:JSON.stringify(payload)
-  });
-  if(!r.ok)throw new Error(await r.text());
-  actions.classList.remove("show");success.classList.add("show");
-  say("Your procurement request has been received. Our procurement agent will now work on it and compile a comparison between suitable suppliers to ensure you get the best deal possible. We will be in touch via "+(state.contact||"your preferred contact method")+".");
-}
-function reset(){
-  Object.keys(state).forEach(k=>state[k]="");state.step=0;
-  messages.innerHTML="";actions.classList.remove("show");success.classList.remove("show");
-  say("Hi, I'm GoProcures. What would you like us to procure?");
-}
-document.getElementById("composer").addEventListener("submit",e=>{e.preventDefault();const t=input.value.trim();if(t){start(t);input.value="";}});
-document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{input.value=c.dataset.example;input.focus();}));
-document.getElementById("submitRequest").addEventListener("click",async function(){
-  this.disabled=true;this.textContent="Submitting...";
-  try{await submit();}catch(e){console.error(e);alert("The request could not be submitted. Check your Supabase anon key and the RLS policy on the requests table.");}
-  this.disabled=false;this.textContent="Submit Procurement Request";
-});
-document.getElementById("restart").addEventListener("click",reset);
 
-const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(Recognition){
-  const rec=new Recognition();rec.lang="en-ZA";rec.continuous=false;rec.interimResults=false;
-  rec.onstart=()=>{talk.classList.add("listening");talkLabel.textContent="Listening..."};
-  rec.onresult=e=>start(e.results[0][0].transcript);
-  rec.onerror=e=>console.warn("Voice:",e.error);
-  rec.onend=()=>{talk.classList.remove("listening");talkLabel.textContent="Talk to GoProcures"};
-  talk.addEventListener("click",()=>{try{rec.start()}catch(e){}});
-}else{
-  talk.addEventListener("click",()=>alert("Voice input is not supported by this browser. Please use Google Chrome or Microsoft Edge."));
-}
-</script>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at 50% 25%,
+          rgba(126, 62, 255, .16),
+          transparent 32%
+        ),
+        radial-gradient(
+          circle at 20% 80%,
+          rgba(38, 120, 255, .08),
+          transparent 30%
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      overflow-x: hidden;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* BACKGROUND */
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .35;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(
+        to bottom,
+        black,
+        transparent 90%
+      );
+    }
+
+    /* HEADER */
+
+    header {
+      height: 70px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 34px;
+      position: relative;
+      z-index: 10;
+      background: rgba(5,6,11,.76);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: white;
+      background:
+        linear-gradient(
+          135deg,
+          #7860ff,
+          #a94fff
+        );
+      box-shadow:
+        0 0 30px rgba(145,82,255,.28);
+    }
+
+    .brand span {
+      background: linear-gradient(
+        90deg,
+        #ffffff,
+        #b77cff
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #aaaabd;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+    }
+
+    /* HERO */
+
+    main {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero {
+      min-height: calc(100vh - 70px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding:
+        44px 20px
+        80px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 15px;
+      border: 1px solid rgba(183,122,255,.22);
+      border-radius: 999px;
+      background: rgba(148,70,255,.055);
+      color: #a8a8ba;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow:
+        inset 0 0 30px rgba(128,55,255,.04);
+    }
+
+    .eyebrow i {
+      width: 5px;
+      height: 5px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--green);
+    }
+
+    h1 {
+      margin: 35px 0 18px;
+      max-width: 1000px;
+      font-size:
+        clamp(52px, 8vw, 108px);
+      line-height: .91;
+      letter-spacing: -6px;
+      font-weight: 900;
+    }
+
+    h1 .white {
+      display: block;
+      color: #f9f8ff;
+    }
+
+    h1 .gradient {
+      display: block;
+      background:
+        linear-gradient(
+          90deg,
+          #f5efff 0%,
+          #bd8cff 35%,
+          #9175ff 65%,
+          #55aaff 100%
+        );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      max-width: 750px;
+      margin: 0 auto;
+      color: #9a9bad;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    /* AI ORB */
+
+    .orb-area {
+      height: 245px;
+      width: 245px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      margin: 28px 0 12px;
+    }
+
+    .orb {
+      position: relative;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 22px;
+      color: white;
+      background:
+        radial-gradient(
+          circle at 35% 30%,
+          #d3b6ff,
+          #7547ba 45%,
+          #24113e 75%
+        );
+      border: 1px solid rgba(214,185,255,.65);
+      box-shadow:
+        0 0 35px rgba(134,73,255,.48),
+        inset 0 0 30px rgba(255,255,255,.12);
+      z-index: 3;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(153,87,255,.30);
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    .ring.r1 {
+      width: 112px;
+      height: 112px;
+    }
+
+    .ring.r2 {
+      width: 150px;
+      height: 150px;
+      border-color: rgba(110,150,255,.28);
+      animation-delay: .7s;
+    }
+
+    .ring.r3 {
+      width: 188px;
+      height: 188px;
+      animation-delay: 1.4s;
+    }
+
+    .ring.r4 {
+      width: 220px;
+      height: 220px;
+      border-color: rgba(143,75,255,.16);
+      animation-delay: 2s;
+    }
+
+    @keyframes pulse {
+      0%,100% {
+        transform: scale(.96);
+        opacity: .45;
+      }
+
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
+      }
+    }
+
+    .orb-dot {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #b981ff;
+      box-shadow: 0 0 12px #9a63ff;
+    }
+
+    .d1 { top: 22px; left: 52px; }
+    .d2 { top: 50px; right: 15px; }
+    .d3 { bottom: 38px; right: 42px; }
+    .d4 { bottom: 26px; left: 52px; }
+    .d5 { top: 62px; left: 18px; }
+
+    /* VOICE BUTTON */
+
+    .voice-button {
+      min-width: 258px;
+      height: 68px;
+      padding: 0 28px;
+      border-radius: 18px;
+      border: 1px solid rgba(167,101,255,.55);
+      color: white;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(128,55,203,.38),
+          rgba(45,73,139,.25)
+        );
+      box-shadow:
+        0 12px 45px rgba(111,52,204,.16),
+        inset 0 1px rgba(255,255,255,.08);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 13px;
+      font-size: 16px;
+      font-weight: 850;
+      transition: .2s ease;
+    }
+
+    .voice-button:hover {
+      transform: translateY(-2px);
+      border-color: #ae7cff;
+      box-shadow:
+        0 18px 55px rgba(111,52,204,.28);
+    }
+
+    .voice-button.listening {
+      border-color: var(--green);
+      box-shadow:
+        0 0 35px rgba(52,230,161,.22);
+    }
+
+    .mic {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.10);
+      font-size: 17px;
+    }
+
+    .voice-status {
+      margin-top: 10px;
+      min-height: 18px;
+      color: #7f8094;
+      font-size: 12px;
+    }
+
+    /* COMPOSER */
+
+    .or {
+      margin: 20px 0 12px;
+      color: #5d5e70;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .composer {
+      width: min(720px, 100%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,18,26,.75);
+      border-radius: 17px;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.22),
+        inset 0 1px rgba(255,255,255,.03);
+    }
+
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      height: 48px;
+      border: 0;
+      outline: 0;
+      color: white;
+      background: transparent;
+      padding: 0 15px;
+      font-size: 16px;
+    }
+
+    .composer input::placeholder {
+      color: #686a7e;
+    }
+
+    .send {
+      width: 52px;
+      height: 52px;
+      border: 0;
+      border-radius: 14px;
+      color: white;
+      background:
+        linear-gradient(
+          135deg,
+          #8d4cff,
+          #547fff
+        );
+      font-size: 22px;
+      font-weight: 900;
+      box-shadow:
+        0 8px 25px rgba(100,75,255,.22);
+    }
+
+    .send:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* CHIPS */
+
+    .chips {
+      width: min(900px, 100%);
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.025);
+      color: #85869a;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 11px;
+      transition: .15s;
+    }
+
+    .chip:hover {
+      color: white;
+      border-color: rgba(159,92,255,.35);
+      background: rgba(145,76,255,.07);
+    }
+
+    /* TRUST */
+
+    .trust {
+      margin-top: 26px;
+      color: #555669;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* MODAL */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(500px, 100%);
+      background:
+        linear-gradient(
+          180deg,
+          #121320,
+          #0a0b11
+        );
+      border: 1px solid rgba(180,135,255,.20);
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow:
+        0 35px 100px rgba(0,0,0,.55);
+    }
+
+    .modal h2 {
+      margin: 0 0 7px;
+      font-size: 24px;
+    }
+
+    .modal p {
+      margin: 0 0 20px;
+      color: #85869a;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .field {
+      margin-bottom: 13px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #aaaabd;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 46px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.10);
+      outline: none;
+      color: white;
+      background: #0b0c13;
+      padding: 0 13px;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(157,92,255,.70);
+    }
+
+    .request-preview {
+      margin: 14px 0;
+      padding: 13px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.025);
+      color: #c3c3d2;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 120px;
+      overflow: auto;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      height: 46px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.10);
+      font-weight: 800;
+    }
+
+    .cancel {
+      color: #aaaabd;
+      background: transparent;
+    }
+
+    .submit-request {
+      color: white;
+      border: 0 !important;
+      background:
+        linear-gradient(
+          135deg,
+          #8e4cff,
+          #557fff
+        );
+    }
+
+    /* TOAST */
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 200;
+      max-width: 380px;
+      padding: 15px 17px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: #11131d;
+      color: #d9d9e5;
+      box-shadow: 0 20px 60px rgba(0,0,0,.40);
+      transform: translateY(130px);
+      opacity: 0;
+      transition: .25s;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-color: rgba(52,230,161,.30);
+    }
+
+    .toast.error {
+      border-color: rgba(255,107,122,.35);
+    }
+
+    /* FOOTER */
+
+    footer {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      padding: 0 20px 30px;
+      color: #474858;
+      font-size: 11px;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 700px) {
+
+      header {
+        padding: 0 18px;
+      }
+
+      .status {
+        font-size: 9px;
+        letter-spacing: 1px;
+      }
+
+      .hero {
+        padding-top: 32px;
+      }
+
+      h1 {
+        font-size: clamp(48px, 14vw, 76px);
+        letter-spacing: -4px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+      }
+
+      .orb-area {
+        transform: scale(.85);
+        margin-top: 15px;
+        margin-bottom: -4px;
+      }
+
+      .composer {
+        width: 100%;
+      }
+
+      .chips {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="grid"></div>
+
+  <!-- HEADER -->
+
+  <header>
+
+    <div class="brand">
+      <div class="brand-logo">GP</div>
+      <span>GoProcures</span>
+    </div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      AI PROCUREMENT AGENT
+    </div>
+
+  </header>
+
+
+  <!-- MAIN -->
+
+  <main>
+
+    <section class="hero">
+
+      <div class="eyebrow">
+        <i></i>
+        GOPROCURES AI · READY TO ASSIST
+      </div>
+
+
+      <h1>
+        <span class="white">Procurement.</span>
+        <span class="gradient">Intelligently handled.</span>
+      </h1>
+
+
+      <p class="subtitle">
+        Hi, I'm GoProcures. Tell me what you need to procure —
+        by voice or text — and I'll help turn your requirement
+        into a clear procurement request for our team.
+      </p>
+
+
+      <!-- AI ORB -->
+
+      <div class="orb-area">
+
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <div class="ring r4"></div>
+
+        <span class="orb-dot d1"></span>
+        <span class="orb-dot d2"></span>
+        <span class="orb-dot d3"></span>
+        <span class="orb-dot d4"></span>
+        <span class="orb-dot d5"></span>
+
+        <div class="orb">
+          AI
+        </div>
+
+      </div>
+
+
+      <!-- VOICE -->
+
+      <button
+        type="button"
+        class="voice-button"
+        id="voiceButton"
+      >
+
+        <span class="mic" id="micIcon">
+          🎙
+        </span>
+
+        <span id="voiceLabel">
+          Talk to GoProcures
+        </span>
+
+      </button>
+
+      <div
+        class="voice-status"
+        id="voiceStatus"
+      ></div>
+
+
+      <div class="or">
+        OR TYPE YOUR REQUIREMENT
+      </div>
+
+
+      <!-- TEXT INPUT -->
+
+      <form
+        class="composer"
+        id="composer"
+      >
+
+        <input
+          id="requestInput"
+          type="text"
+          autocomplete="off"
+          placeholder="e.g. I need 5,000 metres of 12-core fibre..."
+        >
+
+        <button
+          class="send"
+          id="sendButton"
+          type="submit"
+          aria-label="Send request"
+        >
+          →
+        </button>
+
+      </form>
+
+
+      <!-- QUICK EXAMPLES -->
+
+      <div class="chips">
+
+        <button
+          class="chip"
+          type="button"
+          data-example="I need construction steel for a project."
+        >
+          Construction steel
+        </button>
+
+        <button
+          class="chip"
+          type="button"
+          data-example="I need machine spares for an industrial plant."
+        >
+          Machine spares
+        </button>
+
+        <button
+          class="chip"
+          type="button"
+          data-example="I need industrial equipment sourced from South Africa."
+        >
+          Industrial equipment
+        </button>
+
+        <button
+          class="chip"
+          type="button"
+          data-example="I need a complete procurement list for a project."
+        >
+          Project procurement
+        </button>
+
+      </div>
+
+
+      <div class="trust">
+        Africa · South Africa · Eswatini · Mozambique · Global sourcing
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+    © 2026 GoProcures · Procurement intelligence and sourcing
+  </footer>
+
+
+  <!-- CUSTOMER DETAILS MODAL -->
+
+  <div
+    class="modal-backdrop"
+    id="modalBackdrop"
+  >
+
+    <div class="modal">
+
+      <h2>Let's get your requirement</h2>
+
+      <p>
+        We have your procurement request. Give us your contact
+        details so the GoProcures procurement team can work on it.
+      </p>
+
+
+      <div class="request-preview" id="requestPreview"></div>
+
+
+      <div class="field">
+
+        <label for="clientName">
+          Your name
+        </label>
+
+        <input
+          id="clientName"
+          type="text"
+          placeholder="Your name"
+          autocomplete="name"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="clientEmail">
+          Email
+        </label>
+
+        <input
+          id="clientEmail"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="clientPhone">
+          Phone / WhatsApp
+        </label>
+
+        <input
+          id="clientPhone"
+          type="tel"
+          placeholder="+268..."
+          autocomplete="tel"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="region">
+          Region
+        </label>
+
+        <select id="region">
+
+          <option value="Eswatini">
+            Eswatini
+          </option>
+
+          <option value="South Africa">
+            South Africa
+          </option>
+
+          <option value="Mozambique">
+            Mozambique
+          </option>
+
+          <option value="Other Africa">
+            Other Africa
+          </option>
+
+          <option value="Worldwide">
+            Worldwide
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="cancel"
+          id="cancelButton"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="submit-request"
+          id="submitRequest"
+        >
+          Send Procurement Request
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- TOAST -->
+
+  <div
+    class="toast"
+    id="toast"
+  ></div>
+
+
+  <script>
+
+    /*
+    ============================================================
+    GOPROCURES CONFIGURATION
+    ============================================================
+
+    ONLY CHANGE THESE TWO VALUES.
+
+    IMPORTANT:
+
+    1. SUPABASE_URL:
+       Put your Supabase PROJECT URL here.
+
+    2. SUPABASE_KEY:
+       Put your Supabase PUBLISHABLE KEY here.
+
+    DO NOT put:
+       - Supabase Secret Key
+       - service_role key
+       - AI_GATEWAY_API_KEY
+
+    into this HTML.
+    ============================================================
+    */
+
+    const SUPABASE_URL =
+      "https://oulckllygepbqbctzeka.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI";
+
+
+    /*
+    ============================================================
+    ELEMENTS
+    ============================================================
+    */
+
+    const composer =
+      document.getElementById("composer");
+
+    const requestInput =
+      document.getElementById("requestInput");
+
+    const sendButton =
+      document.getElementById("sendButton");
+
+    const voiceButton =
+      document.getElementById("voiceButton");
+
+    const voiceLabel =
+      document.getElementById("voiceLabel");
+
+    const voiceStatus =
+      document.getElementById("voiceStatus");
+
+    const micIcon =
+      document.getElementById("micIcon");
+
+    const modalBackdrop =
+      document.getElementById("modalBackdrop");
+
+    const requestPreview =
+      document.getElementById("requestPreview");
+
+    const clientName =
+      document.getElementById("clientName");
+
+    const clientEmail =
+      document.getElementById("clientEmail");
+
+    const clientPhone =
+      document.getElementById("clientPhone");
+
+    const region =
+      document.getElementById("region");
+
+    const submitRequest =
+      document.getElementById("submitRequest");
+
+    const cancelButton =
+      document.getElementById("cancelButton");
+
+    const toast =
+      document.getElementById("toast");
+
+
+    /*
+    ============================================================
+    STATE
+    ============================================================
+    */
+
+    let pendingRequest = "";
+
+    let recognition = null;
+
+    let isListening = false;
+
+
+    /*
+    ============================================================
+    TOAST
+    ============================================================
+    */
+
+    function showToast(message, type = "") {
+
+      toast.textContent = message;
+
+      toast.className =
+        "toast show " + type;
+
+      setTimeout(() => {
+
+        toast.className =
+          "toast " + type;
+
+      }, 4500);
+    }
+
+
+    /*
+    ============================================================
+    VALIDATION
+    ============================================================
+    */
+
+    function configurationIsValid() {
+
+      if (
+        !SUPABASE_URL ||
+        SUPABASE_URL.includes("PASTE_")
+      ) {
+        showToast(
+          "Supabase URL has not been configured yet.",
+          "error"
+        );
+
+        return false;
+      }
+
+      if (
+        !SUPABASE_KEY ||
+        SUPABASE_KEY.includes("PASTE_")
+      ) {
+        showToast(
+          "Supabase Publishable Key has not been configured yet.",
+          "error"
+        );
+
+        return false;
+      }
+
+      return true;
+    }
+
+
+    /*
+    ============================================================
+    OPEN REQUEST MODAL
+    ============================================================
+    */
+
+    function openRequestModal(text) {
+
+      const cleanText =
+        String(text || "").trim();
+
+      if (!cleanText) {
+
+        showToast(
+          "Please tell me what you need to procure.",
+          "error"
+        );
+
+        return;
+      }
+
+      pendingRequest = cleanText;
+
+      requestPreview.textContent =
+        pendingRequest;
+
+      modalBackdrop.classList.add("show");
+
+      setTimeout(() => {
+        clientName.focus();
+      }, 100);
+
+    }
+
+
+    /*
+    ============================================================
+    CLOSE REQUEST MODAL
+    ============================================================
+    */
+
+    function closeRequestModal() {
+
+      modalBackdrop.classList.remove("show");
+
+    }
+
+
+    /*
+    ============================================================
+    TEXT REQUEST
+    ============================================================
+    */
+
+    composer.addEventListener(
+      "submit",
+      function(event) {
+
+        event.preventDefault();
+
+        const text =
+          requestInput.value.trim();
+
+        if (!text) {
+
+          showToast(
+            "Please enter your procurement requirement.",
+            "error"
+          );
+
+          requestInput.focus();
+
+          return;
+        }
+
+        openRequestModal(text);
+
+      }
+    );
+
+
+    /*
+    ============================================================
+    QUICK EXAMPLES
+    ============================================================
+    */
+
+    document
+      .querySelectorAll(".chip")
+      .forEach(chip => {
+
+        chip.addEventListener(
+          "click",
+          () => {
+
+            const example =
+              chip.dataset.example || "";
+
+            requestInput.value =
+              example;
+
+            requestInput.focus();
+
+          }
+        );
+
+      });
+
+
+    /*
+    ============================================================
+    BROWSER VOICE RECOGNITION
+    ============================================================
+    */
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+
+    if (SpeechRecognition) {
+
+      recognition =
+        new SpeechRecognition();
+
+      recognition.continuous = false;
+
+      recognition.interimResults = false;
+
+      recognition.lang = "en-ZA";
+
+
+      recognition.onstart = function() {
+
+        isListening = true;
+
+        voiceButton.classList.add(
+          "listening"
+        );
+
+        voiceLabel.textContent =
+          "Listening...";
+
+        micIcon.textContent =
+          "🔴";
+
+        voiceStatus.textContent =
+          "Speak your procurement requirement now.";
+
+      };
+
+
+      recognition.onresult =
+        function(event) {
+
+          const transcript =
+            event.results[0][0].transcript;
+
+          requestInput.value =
+            transcript;
+
+          voiceStatus.textContent =
+            "I heard: " + transcript;
+
+          setTimeout(() => {
+
+            openRequestModal(
+              transcript
+            );
+
+          }, 350);
+
+        };
+
+
+      recognition.onerror =
+        function(event) {
+
+          console.error(
+            "Speech recognition error:",
+            event.error
+          );
+
+          if (
+            event.error ===
+            "not-allowed"
+          ) {
+
+            voiceStatus.textContent =
+              "Microphone permission was blocked. Please allow microphone access in your browser.";
+
+          } else {
+
+            voiceStatus.textContent =
+              "I couldn't hear that. Please try again.";
+
+          }
+
+        };
+
+
+      recognition.onend =
+        function() {
+
+          isListening = false;
+
+          voiceButton.classList.remove(
+            "listening"
+          );
+
+          voiceLabel.textContent =
+            "Talk to GoProcures";
+
+          micIcon.textContent =
+            "🎙";
+
+        };
+
+
+      voiceButton.addEventListener(
+        "click",
+        function() {
+
+          try {
+
+            if (isListening) {
+
+              recognition.stop();
+
+              return;
+            }
+
+            voiceStatus.textContent =
+              "Starting microphone...";
+
+            recognition.start();
+
+          } catch (error) {
+
+            console.error(error);
+
+          }
+
+        }
+      );
+
+
+    } else {
+
+      voiceButton.addEventListener(
+        "click",
+        function() {
+
+          showToast(
+            "Voice recognition is not supported by this browser. Please use Chrome or Edge.",
+            "error"
+          );
+
+        }
+      );
+
+    }
+
+
+    /*
+    ============================================================
+    SEND REQUEST TO SUPABASE
+    ============================================================
+    */
+
+    async function saveRequest() {
+
+      if (!configurationIsValid()) {
+        return;
+      }
+
+      const name =
+        clientName.value.trim();
+
+      const email =
+        clientEmail.value.trim();
+
+      const phone =
+        clientPhone.value.trim();
+
+      const selectedRegion =
+        region.value;
+
+
+      if (!name) {
+
+        showToast(
+          "Please enter your name.",
+          "error"
+        );
+
+        clientName.focus();
+
+        return;
+      }
+
+
+      if (!email) {
+
+        showToast(
+          "Please enter your email address.",
+          "error"
+        );
+
+        clientEmail.focus();
+
+        return;
+      }
+
+
+      const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+      if (!emailPattern.test(email)) {
+
+        showToast(
+          "Please enter a valid email address.",
+          "error"
+        );
+
+        clientEmail.focus();
+
+        return;
+      }
+
+
+      if (!pendingRequest) {
+
+        showToast(
+          "The procurement request is empty.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      submitRequest.disabled = true;
+
+      submitRequest.textContent =
+        "Sending...";
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/requests`,
+            {
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json",
+
+                "apikey":
+                  SUPABASE_KEY,
+
+                "Authorization":
+                  `Bearer ${SUPABASE_KEY}`,
+
+                "Prefer":
+                  "return=minimal"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  client_name:
+                    name,
+
+                  client_email:
+                    email,
+
+                  client_phone:
+                    phone,
+
+                  region:
+                    selectedRegion,
+
+                  request_text:
+                    pendingRequest,
+
+                  status:
+                    "New"
+
+                })
+
+            }
+          );
+
+
+        if (!response.ok) {
+
+          const errorText =
+            await response.text();
+
+          console.error(
+            "Supabase error:",
+            errorText
+          );
+
+          throw new Error(
+            errorText ||
+            "Supabase request failed."
+          );
+
+        }
+
+
+        closeRequestModal();
+
+
+        requestInput.value =
+          "";
+
+        clientName.value =
+          "";
+
+        clientEmail.value =
+          "";
+
+        clientPhone.value =
+          "";
+
+        pendingRequest =
+          "";
+
+
+        showToast(
+          "Your procurement request has been received. GoProcures will now work on it.",
+          "success"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Request submission failed:",
+          error
+        );
+
+
+        showToast(
+          "The request could not be submitted. Check your Supabase configuration and RLS INSERT policy.",
+          "error"
+        );
+
+
+      } finally {
+
+        submitRequest.disabled =
+          false;
+
+        submitRequest.textContent =
+          "Send Procurement Request";
+
+      }
+
+    }
+
+
+    /*
+    ============================================================
+    SUBMIT BUTTON
+    ============================================================
+    */
+
+    submitRequest.addEventListener(
+      "click",
+      saveRequest
+    );
+
+
+    /*
+    ============================================================
+    CANCEL
+    ============================================================
+    */
+
+    cancelButton.addEventListener(
+      "click",
+      closeRequestModal
+    );
+
+
+    /*
+    ============================================================
+    CLICK OUTSIDE MODAL
+    ============================================================
+    */
+
+    modalBackdrop.addEventListener(
+      "click",
+      function(event) {
+
+        if (
+          event.target ===
+          modalBackdrop
+        ) {
+
+          closeRequestModal();
+
+        }
+
+      }
+    );
+
+
+    /*
+    ============================================================
+    ESCAPE KEY
+    ============================================================
+    */
+
+    document.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (
+          event.key === "Escape"
+        ) {
+
+          closeRequestModal();
+
+        }
+
+      }
+    );
+
+  </script>
+
 </body>
 </html>
