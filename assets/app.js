@@ -1,0 +1,7 @@
+
+const GP={supabaseUrl:"PASTE_SUPABASE_URL",supabaseKey:"PASTE_SUPABASE_PUBLISHABLE_KEY"};
+const q=(s,e=document)=>e.querySelector(s);
+document.querySelectorAll(".js-example").forEach(b=>b.onclick=()=>{const i=q(b.dataset.input||"#aiQuickInput");if(i){i.value=b.dataset.example;i.focus();}});
+document.querySelectorAll(".js-ai-submit").forEach(b=>b.onclick=()=>{const i=q(b.dataset.input||"#aiQuickInput");const t=i?.value.trim();if(t)location.href=`index.html?request=${encodeURIComponent(t)}`;});
+const form=q("#contactForm");
+if(form)form.onsubmit=async e=>{e.preventDefault();const btn=q('button[type="submit"]',form);btn.disabled=true;btn.textContent="Sending...";const f=new FormData(form);try{if(!GP.supabaseUrl.startsWith("http")||GP.supabaseKey.startsWith("PASTE_")){alert("Configure your Supabase URL and publishable key in assets/app.js first.");}else{const r=await fetch(`${GP.supabaseUrl}/rest/v1/leads`,{method:"POST",headers:{"Content-Type":"application/json","apikey":GP.supabaseKey,"Authorization":`Bearer ${GP.supabaseKey}`,"Prefer":"return=minimal"},body:JSON.stringify({name:f.get("name"),email:f.get("email"),phone:f.get("phone"),company:f.get("company"),enquiry_type:f.get("enquiry_type"),message:f.get("message"),source:"main-website-contact"})});if(!r.ok)throw new Error(await r.text());form.reset();alert("Thank you. Your message has been sent to GoProcures.");}}catch(err){console.error(err);alert("We could not submit the form. Please contact GoProcures directly.");}finally{btn.disabled=false;btn.textContent="Send to GoProcures";}};
