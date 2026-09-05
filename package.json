@@ -1,0 +1,9 @@
+{
+  "name": "goprocures-ai",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@ai-sdk/gateway": "latest",
+    "ai": "latest"
+  }
+}
