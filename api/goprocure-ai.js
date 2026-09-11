@@ -296,7 +296,7 @@ Never tell the customer that they must contact suppliers themselves.
         },
 
         body: JSON.stringify({
-          model: "openai/gpt-5.6-luna",
+          model: "minimax/minimax-m3-free",
           messages: [
             {
               role: "system",
