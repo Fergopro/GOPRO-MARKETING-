@@ -108,11 +108,13 @@ async function updateLeadConversation() {
       `${GP.supabaseUrl}/rest/v1/leads?id=eq.${currentLeadId}`,
       {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": GP.supabaseKey,
-          "Authorization": `Bearer ${GP.supabaseKey}`,
-          "Prefer": "return=minimal"
+       headers: {
+  "Content-Type": "application/json",
+  "apikey": GP.supabaseKey,
+  "Authorization": `Bearer ${GP.supabaseKey}`,
+  "Prefer": "return=minimal",
+  "x-goprocures-session": gpSessionId
+},
         },
         body: JSON.stringify({
           conversation: conversation,
