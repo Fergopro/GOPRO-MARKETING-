@@ -20,7 +20,6 @@ document.querySelectorAll(".js-example").forEach((button) => {
   };
 });
 
-
 /* =========================================================
    AI PROCUREMENT AGENT
 ========================================================= */
@@ -29,9 +28,6 @@ const aiInput = q("#aiQuickInput");
 const aiSubmit = q(".js-ai-submit");
 
 let conversation = [];
-
-
-/* Create / find AI conversation UI */
 
 function getAIConversationBox() {
   let box = q("#aiConversation");
@@ -51,9 +47,6 @@ function getAIConversationBox() {
   return box;
 }
 
-
-/* Add message to conversation */
-
 function addAIMessage(role, text) {
   const box = getAIConversationBox();
 
@@ -71,9 +64,6 @@ function addAIMessage(role, text) {
   box.appendChild(message);
   box.scrollTop = box.scrollHeight;
 }
-
-
-/* Show temporary AI status */
 
 function showAIStatus(text) {
   let status = q("#aiStatus");
@@ -96,9 +86,6 @@ function showAIStatus(text) {
   }
 }
 
-
-/* Hide AI status */
-
 function hideAIStatus() {
   const status = q("#aiStatus");
 
@@ -106,9 +93,6 @@ function hideAIStatus() {
     status.style.display = "none";
   }
 }
-
-
-/* Send request to our secure Vercel API */
 
 async function askGoProcuresAI(text) {
   const response = await fetch("/api/goprocure-ai", {
@@ -122,15 +106,26 @@ async function askGoProcuresAI(text) {
     })
   });
 
-  if (!response.ok) {
-    throw new Error(await response.text());
+  const raw = await response.text();
+
+  let result;
+
+  try {
+    result = JSON.parse(raw);
+  } catch {
+    result = {
+      error: raw
+    };
   }
 
-  return await response.json();
+  if (!response.ok) {
+    throw new Error(
+      `API ${response.status}: ${result.error || raw || "Unknown error"}`
+    );
+  }
+
+  return result;
 }
-
-
-/* Main AI message handler */
 
 async function submitAIMessage(text) {
   text = text.trim();
@@ -180,7 +175,7 @@ async function submitAIMessage(text) {
 
     addAIMessage(
       "assistant",
-      "I'm having trouble connecting to the procurement AI right now. Please try again in a moment."
+      "DEBUG ERROR: " + error.message
     );
 
   } finally {
@@ -195,9 +190,6 @@ async function submitAIMessage(text) {
   }
 }
 
-
-/* Submit button */
-
 if (aiSubmit) {
   aiSubmit.onclick = () => {
     if (!aiInput) return;
@@ -205,9 +197,6 @@ if (aiSubmit) {
     submitAIMessage(aiInput.value);
   };
 }
-
-
-/* Press Enter to send */
 
 if (aiInput) {
   aiInput.addEventListener("keydown", (event) => {
@@ -218,7 +207,6 @@ if (aiInput) {
     }
   });
 }
-
 
 /* =========================================================
    LOAD REQUEST FROM URL
@@ -234,7 +222,6 @@ if (initialRequest && aiInput) {
     submitAIMessage(initialRequest);
   }, 500);
 }
-
 
 /* =========================================================
    CONTACT FORM → SUPABASE
