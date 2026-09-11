@@ -34,6 +34,7 @@ function getAIConversationBox() {
 
   if (!box && aiInput) {
     box = document.createElement("div");
+
     box.id = "aiConversation";
     box.className = "ai-conversation";
 
@@ -47,10 +48,65 @@ function getAIConversationBox() {
   return box;
 }
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function formatAIText(text) {
+  let html = escapeHtml(text);
+
+  /* Bold text */
+  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  /* Clean numbered lists */
+  html = html.replace(
+    /(?:^|\n)\s*(\d+)\.\s+/g,
+    '<div class="ai-list-item"><span class="ai-list-number">$1</span><span>'
+  );
+
+  /*
+    Close numbered list item before the next item.
+    This handles normal AI responses while keeping
+    the layout clean.
+  */
+  html = html.replace(
+    /<\/span>\s*<div class="ai-list-item">/g,
+    '</span></div><div class="ai-list-item">'
+  );
+
+  /* Normal line breaks */
+  html = html.replace(/\n\n+/g, '<div class="ai-paragraph-space"></div>');
+  html = html.replace(/\n/g, "<br>");
+
+  return html;
+}
+
 function addAIMessage(role, text) {
   const box = getAIConversationBox();
 
   if (!box) return;
+
+  const row = document.createElement("div");
+
+  row.className =
+    role === "user"
+      ? "ai-message-row ai-message-row-user"
+      : "ai-message-row ai-message-row-agent";
+
+  const avatar = document.createElement("div");
+
+  avatar.className =
+    role === "user"
+      ? "ai-chat-avatar ai-chat-avatar-user"
+      : "ai-chat-avatar ai-chat-avatar-agent";
+
+  avatar.textContent =
+    role === "user"
+      ? "U"
+      : "AI";
 
   const message = document.createElement("div");
 
@@ -59,10 +115,42 @@ function addAIMessage(role, text) {
       ? "ai-message ai-message-user"
       : "ai-message ai-message-agent";
 
-  message.textContent = text;
+  const label = document.createElement("div");
 
-  box.appendChild(message);
-  box.scrollTop = box.scrollHeight;
+  label.className = "ai-message-label";
+
+  label.textContent =
+    role === "user"
+      ? "YOU"
+      : "GOPROCURES AI";
+
+  const body = document.createElement("div");
+
+  body.className = "ai-message-body";
+
+  if (role === "assistant") {
+    body.innerHTML = formatAIText(text);
+  } else {
+    body.textContent = text;
+  }
+
+  message.appendChild(label);
+  message.appendChild(body);
+
+  if (role === "user") {
+    row.appendChild(message);
+    row.appendChild(avatar);
+  } else {
+    row.appendChild(avatar);
+    row.appendChild(message);
+  }
+
+  box.appendChild(row);
+
+  box.scrollTo({
+    top: box.scrollHeight,
+    behavior: "smooth"
+  });
 }
 
 function showAIStatus(text) {
@@ -70,6 +158,7 @@ function showAIStatus(text) {
 
   if (!status) {
     status = document.createElement("div");
+
     status.id = "aiStatus";
     status.className = "ai-status";
 
@@ -80,9 +169,24 @@ function showAIStatus(text) {
     }
   }
 
-  if (status) {
-    status.textContent = text;
-    status.style.display = "block";
+  status.innerHTML = `
+    <span class="ai-thinking-dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+    <span>${escapeHtml(text)}</span>
+  `;
+
+  status.style.display = "flex";
+
+  const box = getAIConversationBox();
+
+  if (box) {
+    box.scrollTo({
+      top: box.scrollHeight,
+      behavior: "smooth"
+    });
   }
 }
 
@@ -97,9 +201,11 @@ function hideAIStatus() {
 async function askGoProcuresAI(text) {
   const response = await fetch("/api/goprocure-ai", {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json"
     },
+
     body: JSON.stringify({
       message: text,
       conversation: conversation
@@ -120,7 +226,9 @@ async function askGoProcuresAI(text) {
 
   if (!response.ok) {
     throw new Error(
-      `API ${response.status}: ${result.error || raw || "Unknown error"}`
+      result.error ||
+      raw ||
+      "Unable to connect to GoProcures AI."
     );
   }
 
@@ -128,7 +236,7 @@ async function askGoProcuresAI(text) {
 }
 
 async function submitAIMessage(text) {
-  text = text.trim();
+  text = String(text || "").trim();
 
   if (!text) return;
 
@@ -148,7 +256,7 @@ async function submitAIMessage(text) {
     aiSubmit.disabled = true;
   }
 
-  showAIStatus("GoProcures AI is understanding your requirement...");
+  showAIStatus("Understanding your requirement...");
 
   try {
     const result = await askGoProcuresAI(text);
@@ -172,11 +280,11 @@ async function submitAIMessage(text) {
     console.error("GoProcures AI error:", error);
 
     hideAIStatus();
-addAIMessage(
-  "assistant",
-  "I'm having trouble connecting to the procurement AI right now. Please try again in a moment."
-);
 
+    addAIMessage(
+      "assistant",
+      "I'm having trouble connecting to the procurement AI right now. Please try again in a moment."
+    );
 
   } finally {
     if (aiInput) {
@@ -190,6 +298,10 @@ addAIMessage(
   }
 }
 
+/* =========================================================
+   SEND BUTTON
+========================================================= */
+
 if (aiSubmit) {
   aiSubmit.onclick = () => {
     if (!aiInput) return;
@@ -197,6 +309,10 @@ if (aiSubmit) {
     submitAIMessage(aiInput.value);
   };
 }
+
+/* =========================================================
+   PRESS ENTER TO SEND
+========================================================= */
 
 if (aiInput) {
   aiInput.addEventListener("keydown", (event) => {
@@ -213,6 +329,7 @@ if (aiInput) {
 ========================================================= */
 
 const params = new URLSearchParams(window.location.search);
+
 const initialRequest = params.get("request");
 
 if (initialRequest && aiInput) {
