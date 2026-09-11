@@ -172,11 +172,11 @@ async function submitAIMessage(text) {
     console.error("GoProcures AI error:", error);
 
     hideAIStatus();
+addAIMessage(
+  "assistant",
+  "I'm having trouble connecting to the procurement AI right now. Please try again in a moment."
+);
 
-    addAIMessage(
-      "assistant",
-      "DEBUG ERROR: " + error.message
-    );
 
   } finally {
     if (aiInput) {
