@@ -296,8 +296,15 @@ Never tell the customer that they must contact suppliers themselves.
         },
 
         body: JSON.stringify({
-          model: "minimax/minimax-m3-free",
-          messages: [
+  model: "minimax/minimax-m3",
+
+  providerOptions: {
+    gateway: {
+      has: ["free"]
+    }
+  },
+
+  messages: [
             {
               role: "system",
               content: systemPrompt
