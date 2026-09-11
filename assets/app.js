@@ -4,6 +4,17 @@ const GP = {
 };
 
 const q = (s, e = document) => e.querySelector(s);
+let gpSessionId = localStorage.getItem("goprocures_session_id");
+
+if (!gpSessionId) {
+  gpSessionId =
+    (crypto.randomUUID && crypto.randomUUID()) ||
+    "gp_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+
+  localStorage.setItem("goprocures_session_id", gpSessionId);
+}
+
+let currentLeadId = localStorage.getItem("goprocures_lead_id") || null;
 
 /* =========================================================
    EXAMPLE REQUEST BUTTONS
@@ -28,6 +39,92 @@ const aiInput = q("#aiQuickInput");
 const aiSubmit = q(".js-ai-submit");
 
 let conversation = [];
+async function createLeadIfNeeded(firstMessage) {
+  if (currentLeadId) {
+    return currentLeadId;
+  }
+
+  if (
+    !GP.supabaseUrl.startsWith("http") ||
+    GP.supabaseKey.includes("PASTE_")
+  ) {
+    console.warn("Supabase is not configured for AI lead capture.");
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${GP.supabaseUrl}/rest/v1/leads`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": GP.supabaseKey,
+          "Authorization": `Bearer ${GP.supabaseKey}`,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          message: firstMessage,
+          source: "goprocures_ai",
+          enquiry_type: "AI Procurement Enquiry",
+          session_id: gpSessionId,
+          status: "incomplete",
+          conversation: [
+            {
+              role: "user",
+              content: firstMessage
+            }
+          ],
+          updated_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data) && data[0]?.id) {
+      currentLeadId = data[0].id;
+      localStorage.setItem("goprocures_lead_id", currentLeadId);
+    }
+
+    return currentLeadId;
+
+  } catch (error) {
+    console.error("Could not create AI lead:", error);
+    return null;
+  }
+}
+
+async function updateLeadConversation() {
+  if (!currentLeadId) return;
+
+  try {
+    await fetch(
+      `${GP.supabaseUrl}/rest/v1/leads?id=eq.${currentLeadId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": GP.supabaseKey,
+          "Authorization": `Bearer ${GP.supabaseKey}`,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          conversation: conversation,
+          updated_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
+        })
+      }
+    );
+  } catch (error) {
+    console.error("Could not update AI lead:", error);
+  }
+}
 
 function getAIConversationBox() {
   let box = q("#aiConversation");
@@ -246,6 +343,8 @@ async function submitAIMessage(text) {
     role: "user",
     content: text
   });
+  await createLeadIfNeeded(text);
+await updateLeadConversation();
 
   if (aiInput) {
     aiInput.value = "";
@@ -275,6 +374,8 @@ async function submitAIMessage(text) {
       role: "assistant",
       content: reply
     });
+    
+    await updateLeadConversation();
 
   } catch (error) {
     console.error("GoProcures AI error:", error);
