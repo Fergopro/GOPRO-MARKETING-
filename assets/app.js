@@ -1,3 +1,4 @@
+
 const GP = {
   supabaseUrl: "https://oulckllygepbqbctzeka.supabase.co",
   supabaseKey: "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI"
@@ -6,55 +7,20 @@ const GP = {
 const q = (selector, element = document) =>
   element.querySelector(selector);
 
-
-/* =========================================================
-   VISITOR / LEAD SESSION
-========================================================= */
-
-let gpSessionId =
-  localStorage.getItem("goprocures_session_id");
-
-if (!gpSessionId) {
-  gpSessionId =
-    (crypto.randomUUID && crypto.randomUUID()) ||
-    "gp_" +
-      Date.now() +
-      "_" +
-      Math.random().toString(36).slice(2);
-
-  localStorage.setItem(
-    "goprocures_session_id",
-    gpSessionId
-  );
-}
-
-let currentLeadId =
-  localStorage.getItem("goprocures_lead_id") || null;
-
-let leadCreationStarted = false;
-
-
 /* =========================================================
    EXAMPLE REQUEST BUTTONS
 ========================================================= */
 
-document
-  .querySelectorAll(".js-example")
-  .forEach((button) => {
-    button.onclick = () => {
-      const input = q(
-        button.dataset.input || "#aiQuickInput"
-      );
+document.querySelectorAll(".js-example").forEach((button) => {
+  button.onclick = () => {
+    const input = q(button.dataset.input || "#aiQuickInput");
 
-      if (input) {
-        input.value =
-          button.dataset.example || "";
-
-        input.focus();
-      }
-    };
-  });
-
+    if (input) {
+      input.value = button.dataset.example || "";
+      input.focus();
+    }
+  };
+});
 
 /* =========================================================
    AI PROCUREMENT AGENT
@@ -64,7 +30,22 @@ const aiInput = q("#aiQuickInput");
 const aiSubmit = q(".js-ai-submit");
 
 let conversation = [];
+let firstLeadMessage = "";
 
+let capturedName = "";
+let capturedEmail = "";
+let capturedPhone = "";
+let capturedCompany = "";
+
+let aiBusy = false;
+
+/*
+  Lead requests are sent in sequence to prevent an older
+  conversation snapshot overwriting a newer one.
+*/
+
+let leadSaveRunning = false;
+let leadSavePending = false;
 
 /* =========================================================
    CREATE CHAT AREA
@@ -79,40 +60,30 @@ function getAIConversationBox() {
     box.id = "aiConversation";
     box.className = "ai-conversation";
 
-    const inputArea =
-      aiInput.closest(".ai-input");
+    const inputArea = aiInput.closest(".ai-input");
 
     if (inputArea) {
-      inputArea.parentNode.insertBefore(
-        box,
-        inputArea
-      );
+      inputArea.parentNode.insertBefore(box, inputArea);
     }
   }
 
   return box;
 }
 
-
 /* =========================================================
-   SAFE HTML
+   SAFE TEXT FORMATTING
 ========================================================= */
 
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-
-/* =========================================================
-   FORMAT AI RESPONSE
-========================================================= */
-
 function formatAIText(text) {
-  const lines = String(text)
-    .split("\n");
+  const lines = String(text).split("\n");
 
   let html = "";
 
@@ -120,18 +91,14 @@ function formatAIText(text) {
     const cleanLine = line.trim();
 
     if (!cleanLine) {
-      html +=
-        '<div class="ai-paragraph-space"></div>';
-
+      html += '<div class="ai-paragraph-space"></div>';
       return;
     }
 
-    const numbered =
-      cleanLine.match(/^(\d+)\.\s+(.*)$/);
+    const numbered = cleanLine.match(/^(\d+)\.\s+(.*)$/);
 
     if (numbered) {
-      let itemText =
-        escapeHtml(numbered[2]);
+      let itemText = escapeHtml(numbered[2]);
 
       itemText = itemText.replace(
         /\*\*(.*?)\*\*/g,
@@ -140,21 +107,15 @@ function formatAIText(text) {
 
       html += `
         <div class="ai-list-item">
-          <span class="ai-list-number">
-            ${numbered[1]}
-          </span>
-
-          <span>
-            ${itemText}
-          </span>
+          <span class="ai-list-number">${numbered[1]}</span>
+          <span>${itemText}</span>
         </div>
       `;
 
       return;
     }
 
-    let normalText =
-      escapeHtml(cleanLine);
+    let normalText = escapeHtml(cleanLine);
 
     normalText = normalText.replace(
       /\*\*(.*?)\*\*/g,
@@ -162,88 +123,64 @@ function formatAIText(text) {
     );
 
     html += `
-      <div class="ai-text-line">
-        ${normalText}
-      </div>
+      <div class="ai-text-line">${normalText}</div>
     `;
   });
 
   return html;
 }
 
-
 /* =========================================================
-   ADD CHAT MESSAGE
+   DISPLAY CHAT MESSAGES
 ========================================================= */
 
 function addAIMessage(role, text) {
-  const box =
-    getAIConversationBox();
+  const box = getAIConversationBox();
 
   if (!box) return;
 
-  const row =
-    document.createElement("div");
+  const row = document.createElement("div");
 
   row.className =
     role === "user"
       ? "ai-message-row ai-message-row-user"
       : "ai-message-row ai-message-row-agent";
 
-
-  const avatar =
-    document.createElement("div");
+  const avatar = document.createElement("div");
 
   avatar.className =
     role === "user"
       ? "ai-chat-avatar ai-chat-avatar-user"
       : "ai-chat-avatar ai-chat-avatar-agent";
 
-  avatar.textContent =
-    role === "user"
-      ? "U"
-      : "AI";
+  avatar.textContent = role === "user" ? "U" : "AI";
 
-
-  const message =
-    document.createElement("div");
+  const message = document.createElement("div");
 
   message.className =
     role === "user"
       ? "ai-message ai-message-user"
       : "ai-message ai-message-agent";
 
+  const label = document.createElement("div");
 
-  const label =
-    document.createElement("div");
-
-  label.className =
-    "ai-message-label";
+  label.className = "ai-message-label";
 
   label.textContent =
-    role === "user"
-      ? "YOU"
-      : "GOPROCURES AI";
+    role === "user" ? "YOU" : "GOPROCURES AI";
 
+  const body = document.createElement("div");
 
-  const body =
-    document.createElement("div");
-
-  body.className =
-    "ai-message-body";
-
+  body.className = "ai-message-body";
 
   if (role === "assistant") {
-    body.innerHTML =
-      formatAIText(text);
+    body.innerHTML = formatAIText(text);
   } else {
     body.textContent = text;
   }
 
-
   message.appendChild(label);
   message.appendChild(body);
-
 
   if (role === "user") {
     row.appendChild(message);
@@ -253,9 +190,7 @@ function addAIMessage(role, text) {
     row.appendChild(message);
   }
 
-
   box.appendChild(row);
-
 
   box.scrollTo({
     top: box.scrollHeight,
@@ -263,29 +198,22 @@ function addAIMessage(role, text) {
   });
 }
 
-
 /* =========================================================
-   AI THINKING STATUS
+   THINKING INDICATOR
 ========================================================= */
 
 function showAIStatus(text) {
   let status = q("#aiStatus");
 
   if (!status) {
-    status =
-      document.createElement("div");
-
+    status = document.createElement("div");
     status.id = "aiStatus";
     status.className = "ai-status";
 
-    const box =
-      getAIConversationBox();
+    const box = getAIConversationBox();
 
-    if (box) {
-      box.appendChild(status);
-    }
+    if (box) box.appendChild(status);
   }
-
 
   status.innerHTML = `
     <span class="ai-thinking-dots">
@@ -293,17 +221,12 @@ function showAIStatus(text) {
       <span></span>
       <span></span>
     </span>
-
-    <span>
-      ${escapeHtml(text)}
-    </span>
+    <span>${escapeHtml(text)}</span>
   `;
 
   status.style.display = "flex";
 
-
-  const box =
-    getAIConversationBox();
+  const box = getAIConversationBox();
 
   if (box) {
     box.scrollTo({
@@ -313,183 +236,159 @@ function showAIStatus(text) {
   }
 }
 
-
 function hideAIStatus() {
-  const status =
-    q("#aiStatus");
+  const status = q("#aiStatus");
 
-  if (status) {
-    status.style.display = "none";
-  }
+  if (status) status.style.display = "none";
 }
 
-
 /* =========================================================
-   CAPTURE FIRST LEAD
+   CONTACT DETAIL EXTRACTION
 ========================================================= */
 
-function captureInitialLead(firstMessage) {
+function extractContactDetails(text) {
+  const value = String(text || "");
+
+  const emailMatch = value.match(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i
+  );
+
+  if (emailMatch) {
+    capturedEmail = emailMatch[0];
+  }
+
   /*
-    IMPORTANT:
+    Only recognise a phone number when the customer
+    explicitly indicates that it is a contact number.
 
-    This deliberately runs in the background.
-
-    The customer should NEVER have to wait
-    for Supabase before the AI responds.
+    This avoids confusing quantities such as
+    "5000 units" with telephone numbers.
   */
 
-  if (currentLeadId) {
-    return;
-  }
+  const phoneMatch = value.match(
+    /\b(?:whatsapp|wa|phone|mobile|telephone|contact number|call me(?: on| at)?)\b[\s:=-]*(?:number\s*(?:is|:)?\s*)?(\+?\d[\d\s()-]{6,}\d)/i
+  );
 
-  if (leadCreationStarted) {
-    return;
-  }
+  if (phoneMatch) {
+    const possiblePhone = phoneMatch[1].trim();
 
-  if (
-    !GP.supabaseUrl.startsWith("http") ||
-    GP.supabaseKey.includes("PASTE_")
-  ) {
-    console.warn(
-      "Supabase lead capture is not configured."
-    );
+    const digits = possiblePhone.replace(/\D/g, "");
 
-    return;
-  }
-
-
-  leadCreationStarted = true;
-
-
-  fetch(
-    `${GP.supabaseUrl}/rest/v1/leads`,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": GP.supabaseKey,
-        "Authorization":
-          `Bearer ${GP.supabaseKey}`,
-        "Prefer": "return=representation"
-      },
-
-      body: JSON.stringify({
-        message: firstMessage,
-
-        source:
-          "goprocures_ai",
-
-        enquiry_type:
-          "AI Procurement Enquiry",
-
-        session_id:
-          gpSessionId,
-
-        status:
-          "incomplete",
-
-        conversation: [
-          {
-            role: "user",
-            content: firstMessage
-          }
-        ],
-
-        updated_at:
-          new Date().toISOString(),
-
-        last_seen_at:
-          new Date().toISOString()
-      })
+    if (digits.length >= 8 && digits.length <= 15) {
+      capturedPhone = possiblePhone;
     }
-  )
-
-    .then(async (response) => {
-      if (!response.ok) {
-        throw new Error(
-          await response.text()
-        );
-      }
-
-      return response.json();
-    })
-
-    .then((data) => {
-      if (
-        Array.isArray(data) &&
-        data[0]?.id
-      ) {
-        currentLeadId =
-          data[0].id;
-
-        localStorage.setItem(
-          "goprocures_lead_id",
-          currentLeadId
-        );
-
-        console.log(
-          "GoProcures lead captured:",
-          currentLeadId
-        );
-      }
-    })
-
-    .catch((error) => {
-      console.error(
-        "Could not create AI lead:",
-        error
-      );
-
-      /*
-        Allow another attempt later
-        if the initial insert failed.
-      */
-
-      leadCreationStarted = false;
-    });
+  }
 }
 
+/* =========================================================
+   SECURE LEAD SAVING
+========================================================= */
+
+async function saveLeadSnapshot() {
+  if (!firstLeadMessage || conversation.length === 0) {
+    return;
+  }
+
+  const payload = {
+    message: firstLeadMessage,
+    conversation: conversation.map((entry) => ({
+      role: entry.role,
+      content: entry.content
+    })),
+    name: capturedName || null,
+    email: capturedEmail || null,
+    phone: capturedPhone || null,
+    company: capturedCompany || null
+  };
+
+  const response = await fetch("/api/lead", {
+    method: "POST",
+
+    credentials: "same-origin",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const result = await response.text();
+
+    throw new Error(
+      "Lead API " + response.status + ": " + result
+    );
+  }
+
+  return await response.json();
+}
+
+/*
+  All lead updates are processed in order.
+
+  This prevents two overlapping saves from accidentally
+  overwriting the full conversation with older data.
+
+  Importantly, the AI never waits for this function.
+*/
+
+async function processLeadSaveQueue() {
+  if (leadSaveRunning) return;
+
+  leadSaveRunning = true;
+
+  try {
+    while (leadSavePending) {
+      leadSavePending = false;
+
+      try {
+        await saveLeadSnapshot();
+      } catch (error) {
+        console.error("GoProcures lead save failed:", error);
+      }
+    }
+  } finally {
+    leadSaveRunning = false;
+  }
+}
+
+function queueLeadSave() {
+  leadSavePending = true;
+
+  // Do not await this in the AI conversation.
+  void processLeadSaveQueue();
+}
 
 /* =========================================================
-   CALL GOPROCURES AI
+   CONNECT TO GOPROCURES TEXT AI
 ========================================================= */
 
 async function askGoProcuresAI(text) {
-  const response = await fetch(
-    "/api/goprocure-ai",
-    {
-      method: "POST",
+  const response = await fetch("/api/goprocure-ai", {
+    method: "POST",
 
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
+    headers: {
+      "Content-Type": "application/json"
+    },
 
-      body: JSON.stringify({
-        message: text,
-        conversation: conversation
-      })
-    }
-  );
+    body: JSON.stringify({
+      message: text,
+      conversation: conversation
+    })
+  });
 
-
-  const raw =
-    await response.text();
-
+  const raw = await response.text();
 
   let result;
 
-
   try {
-    result =
-      JSON.parse(raw);
+    result = JSON.parse(raw);
   } catch {
     result = {
       error: raw
     };
   }
-
 
   if (!response.ok) {
     throw new Error(
@@ -499,81 +398,58 @@ async function askGoProcuresAI(text) {
     );
   }
 
-
   return result;
 }
 
-
 /* =========================================================
-   SEND MESSAGE
+   SEND A CUSTOMER MESSAGE
 ========================================================= */
 
 async function submitAIMessage(text) {
-  text =
-    String(text || "").trim();
+  if (aiBusy) return;
 
+  text = String(text || "").trim();
 
   if (!text) return;
 
+  aiBusy = true;
 
-  /*
-    Display customer message immediately.
-  */
+  if (!firstLeadMessage) {
+    firstLeadMessage = text;
+  }
 
-  addAIMessage(
-    "user",
-    text
-  );
+  extractContactDetails(text);
 
-
-  /*
-    Add message to AI conversation memory.
-  */
+  addAIMessage("user", text);
 
   conversation.push({
     role: "user",
     content: text
   });
 
-
   /*
-    Capture the lead in the background.
+    Start saving the lead immediately.
 
-    NO await here.
-
-    Supabase cannot delay the AI.
+    This does not delay the AI response.
   */
 
-  captureInitialLead(text);
-
-
-  /*
-    Disable input while AI is answering.
-  */
+  queueLeadSave();
 
   if (aiInput) {
     aiInput.value = "";
     aiInput.disabled = true;
   }
 
-
   if (aiSubmit) {
     aiSubmit.disabled = true;
   }
 
-
-  showAIStatus(
-    "Understanding your requirement..."
-  );
-
+  showAIStatus("Understanding your requirement...");
 
   try {
-    const result =
-      await askGoProcuresAI(text);
-
+    const result = await askGoProcuresAI(text);
 
     hideAIStatus();
-
 
     const reply =
       result.reply ||
@@ -581,48 +457,49 @@ async function submitAIMessage(text) {
       result.content ||
       "I understand. Let me help you clarify the procurement requirement.";
 
-
-    addAIMessage(
-      "assistant",
-      reply
-    );
-
+    addAIMessage("assistant", reply);
 
     conversation.push({
       role: "assistant",
       content: reply
     });
 
+    /*
+      Update the same lead with the AI response.
+    */
+
+    queueLeadSave();
 
   } catch (error) {
-    console.error(
-      "GoProcures AI error:",
-      error
-    );
-
+    console.error("GoProcures AI error:", error);
 
     hideAIStatus();
 
+    const errorMessage =
+      "I'm having trouble connecting to the procurement AI right now. Please try again in a moment.";
 
-    addAIMessage(
-      "assistant",
-      "I'm having trouble connecting to the procurement AI right now. Please try again in a moment."
-    );
+    addAIMessage("assistant", errorMessage);
 
+    conversation.push({
+      role: "assistant",
+      content: errorMessage
+    });
+
+    queueLeadSave();
 
   } finally {
+    aiBusy = false;
+
     if (aiInput) {
       aiInput.disabled = false;
       aiInput.focus();
     }
-
 
     if (aiSubmit) {
       aiSubmit.disabled = false;
     }
   }
 }
-
 
 /* =========================================================
    SEND BUTTON
@@ -632,190 +509,117 @@ if (aiSubmit) {
   aiSubmit.onclick = () => {
     if (!aiInput) return;
 
-    submitAIMessage(
-      aiInput.value
-    );
+    submitAIMessage(aiInput.value);
   };
 }
 
-
 /* =========================================================
-   PRESS ENTER TO SEND
+   ENTER KEY
 ========================================================= */
 
 if (aiInput) {
-  aiInput.addEventListener(
-    "keydown",
-    (event) => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
+  aiInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
 
-        submitAIMessage(
-          aiInput.value
-        );
-      }
+      submitAIMessage(aiInput.value);
     }
-  );
+  });
 }
 
-
 /* =========================================================
-   LOAD REQUEST FROM URL
+   INITIAL REQUEST FROM URL
 ========================================================= */
 
-const params =
-  new URLSearchParams(
-    window.location.search
-  );
+const params = new URLSearchParams(window.location.search);
 
+const initialRequest = params.get("request");
 
-const initialRequest =
-  params.get("request");
-
-
-if (
-  initialRequest &&
-  aiInput
-) {
-  aiInput.value =
-    initialRequest;
-
+if (initialRequest && aiInput) {
+  aiInput.value = initialRequest;
 
   setTimeout(() => {
-    submitAIMessage(
-      initialRequest
-    );
+    submitAIMessage(initialRequest);
   }, 500);
 }
 
-
 /* =========================================================
-   CONTACT FORM → SUPABASE
+   EXISTING CONTACT FORM
 ========================================================= */
 
-const form =
-  q("#contactForm");
-
+const form = q("#contactForm");
 
 if (form) {
-  form.onsubmit =
-    async (event) => {
+  form.onsubmit = async (event) => {
+    event.preventDefault();
 
-      event.preventDefault();
+    const button = q('button[type="submit"]', form);
 
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Sending...";
+    }
 
-      const button =
-        q(
-          'button[type="submit"]',
-          form
+    const formData = new FormData(form);
+
+    try {
+      if (
+        !GP.supabaseUrl.startsWith("http") ||
+        GP.supabaseKey.includes("PASTE_")
+      ) {
+        alert(
+          "Please configure the Supabase publishable key in assets/app.js."
         );
 
+        return;
+      }
 
+      const response = await fetch(
+        `${GP.supabaseUrl}/rest/v1/leads`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            apikey: GP.supabaseKey,
+            Authorization: `Bearer ${GP.supabaseKey}`,
+            Prefer: "return=minimal"
+          },
+
+          body: JSON.stringify({
+            name: formData.get("name"),
+            email: formData.get("email"),
+            phone: formData.get("phone"),
+            company: formData.get("company"),
+            enquiry_type: formData.get("enquiry_type"),
+            message: formData.get("message"),
+            source: "main-website-contact"
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      form.reset();
+
+      alert(
+        "Thank you. Your message has been sent to GoProcures."
+      );
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "We could not submit the form. Please contact GoProcures directly."
+      );
+
+    } finally {
       if (button) {
-        button.disabled = true;
-        button.textContent =
-          "Sending...";
+        button.disabled = false;
+        button.textContent = "Send to GoProcures";
       }
-
-
-      const formData =
-        new FormData(form);
-
-
-      try {
-        if (
-          !GP.supabaseUrl.startsWith("http") ||
-          GP.supabaseKey.includes("PASTE_")
-        ) {
-          alert(
-            "Please configure the Supabase publishable key in assets/app.js."
-          );
-
-          return;
-        }
-
-
-        const response =
-          await fetch(
-            `${GP.supabaseUrl}/rest/v1/leads`,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-
-                "apikey":
-                  GP.supabaseKey,
-
-                "Authorization":
-                  `Bearer ${GP.supabaseKey}`,
-
-                "Prefer":
-                  "return=minimal"
-              },
-
-              body: JSON.stringify({
-                name:
-                  formData.get("name"),
-
-                email:
-                  formData.get("email"),
-
-                phone:
-                  formData.get("phone"),
-
-                company:
-                  formData.get("company"),
-
-                enquiry_type:
-                  formData.get(
-                    "enquiry_type"
-                  ),
-
-                message:
-                  formData.get("message"),
-
-                source:
-                  "main-website-contact"
-              })
-            }
-          );
-
-
-        if (!response.ok) {
-          throw new Error(
-            await response.text()
-          );
-        }
-
-
-        form.reset();
-
-
-        alert(
-          "Thank you. Your message has been sent to GoProcures."
-        );
-
-
-      } catch (error) {
-        console.error(error);
-
-
-        alert(
-          "We could not submit the form. Please contact GoProcures directly."
-        );
-
-
-      } finally {
-        if (button) {
-          button.disabled = false;
-          button.textContent =
-            "Send to GoProcures";
-        }
-      }
-    };
+    }
+  };
 }
