@@ -1,0 +1,1526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+
+  <title>GoProcures | Client Dashboard</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+    }
+
+    html,
+    body{
+      margin:0;
+      min-height:100%;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background:#050812;
+      color:#fff;
+    }
+
+    body{
+      background:
+        radial-gradient(
+          circle at 15% 10%,
+          rgba(111,82,255,.13),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 85% 75%,
+          rgba(47,142,255,.09),
+          transparent 30%
+        ),
+        #050812;
+    }
+
+    button,
+    input,
+    textarea,
+    select{
+      font:inherit;
+    }
+
+    a{
+      color:inherit;
+      text-decoration:none;
+    }
+
+    .layout{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:250px minmax(0,1fr);
+    }
+
+    .sidebar{
+      border-right:1px solid rgba(255,255,255,.07);
+      background:rgba(6,9,19,.92);
+      padding:24px 18px;
+      display:flex;
+      flex-direction:column;
+      position:sticky;
+      top:0;
+      height:100vh;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:11px;
+      font-weight:800;
+      font-size:19px;
+      margin-bottom:34px;
+    }
+
+    .brand-mark{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,#765eff,#4e95ff);
+      box-shadow:0 10px 28px rgba(94,88,255,.26);
+      font-size:12px;
+    }
+
+    .brand em{
+      font-style:normal;
+      color:#a590ff;
+    }
+
+    .nav{
+      display:grid;
+      gap:8px;
+    }
+
+    .nav a{
+      padding:12px 13px;
+      border-radius:12px;
+      color:#8593ae;
+      font-size:13px;
+      border:1px solid transparent;
+    }
+
+    .nav a.active{
+      color:#fff;
+      background:rgba(117,94,255,.10);
+      border-color:rgba(117,94,255,.18);
+    }
+
+    .nav a:hover{
+      color:#fff;
+      background:rgba(255,255,255,.03);
+    }
+
+    .sidebar-bottom{
+      margin-top:auto;
+      padding-top:20px;
+      border-top:1px solid rgba(255,255,255,.07);
+    }
+
+    .user-mini{
+      margin-bottom:13px;
+    }
+
+    .user-mini strong{
+      display:block;
+      font-size:13px;
+      margin-bottom:3px;
+    }
+
+    .user-mini span{
+      display:block;
+      color:#6f7d98;
+      font-size:11px;
+      word-break:break-word;
+    }
+
+    .logout{
+      width:100%;
+      border:1px solid rgba(255,255,255,.09);
+      background:transparent;
+      color:#8e9ab2;
+      border-radius:11px;
+      padding:10px;
+      cursor:pointer;
+    }
+
+    .logout:hover{
+      color:#fff;
+      border-color:rgba(255,255,255,.16);
+    }
+
+    .main{
+      min-width:0;
+      padding:32px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:20px;
+      margin-bottom:30px;
+    }
+
+    .eyebrow{
+      color:#9f8cff;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:1.4px;
+      text-transform:uppercase;
+      margin-bottom:7px;
+    }
+
+    h1{
+      margin:0;
+      font-size:34px;
+      letter-spacing:-1px;
+    }
+
+    .sub{
+      margin:7px 0 0;
+      color:#7e8ca7;
+      font-size:14px;
+    }
+
+    .primary{
+      border:0;
+      color:#fff;
+      background:linear-gradient(135deg,#755eff,#4c92ff);
+      padding:12px 16px;
+      border-radius:13px;
+      font-size:13px;
+      font-weight:750;
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(86,83,255,.22);
+    }
+
+    .primary:hover{
+      transform:translateY(-1px);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      margin-bottom:26px;
+    }
+
+    .stat{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:20px;
+      background:rgba(10,14,27,.78);
+      box-shadow:0 18px 45px rgba(0,0,0,.13);
+    }
+
+    .stat small{
+      color:#74829d;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+
+    .stat strong{
+      display:block;
+      margin-top:8px;
+      font-size:30px;
+      letter-spacing:-1px;
+    }
+
+    .panel{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;
+      background:rgba(9,13,25,.78);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:18px 20px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+
+    .panel-head h2{
+      margin:0;
+      font-size:17px;
+    }
+
+    .panel-head span{
+      color:#697791;
+      font-size:11px;
+    }
+
+    .requests{
+      display:grid;
+    }
+
+    .request-card{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:18px;
+      padding:19px 20px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .request-card:last-child{
+      border-bottom:0;
+    }
+
+    .request-title{
+      font-size:14px;
+      font-weight:750;
+      margin-bottom:7px;
+    }
+
+    .request-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color:#71809b;
+      font-size:11px;
+    }
+
+    .request-summary{
+      margin-top:10px;
+      color:#9aa6bd;
+      font-size:12px;
+      line-height:1.6;
+      max-width:760px;
+    }
+
+    .status{
+      align-self:start;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+      border:1px solid rgba(255,255,255,.08);
+      color:#aeb8cc;
+      background:rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+
+    .status.ready{
+      color:#d6ccff;
+      border-color:rgba(133,104,255,.23);
+      background:rgba(133,104,255,.09);
+    }
+
+    .status.complete{
+      color:#bbefd5;
+      border-color:rgba(61,190,128,.18);
+      background:rgba(61,190,128,.07);
+    }
+
+    .empty{
+      padding:40px 20px;
+      text-align:center;
+      color:#72809a;
+      font-size:13px;
+    }
+
+    .empty strong{
+      display:block;
+      color:#dbe0ea;
+      font-size:15px;
+      margin-bottom:6px;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(2,4,10,.74);
+      backdrop-filter:blur(8px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:20;
+    }
+
+    .modal-backdrop.open{
+      display:flex;
+    }
+
+    .modal{
+      width:min(620px,100%);
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.09);
+      background:#0a0f1d;
+      padding:24px;
+      box-shadow:0 30px 80px rgba(0,0,0,.42);
+    }
+
+    .modal-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    }
+
+    .modal-top h3{
+      margin:0;
+      font-size:20px;
+    }
+
+    .close{
+      border:0;
+      background:transparent;
+      color:#7f8ca6;
+      font-size:22px;
+      cursor:pointer;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .field{
+      display:grid;
+      gap:7px;
+    }
+
+    .field.full{
+      grid-column:1/-1;
+    }
+
+    .field label{
+      color:#9aa7bd;
+      font-size:11px;
+      font-weight:650;
+    }
+
+    .field input,
+    .field textarea,
+    .field select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.09);
+      background:#070b15;
+      color:#fff;
+      padding:12px;
+      outline:none;
+    }
+
+    .field textarea{
+      min-height:130px;
+      resize:vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus{
+      border-color:rgba(118,94,255,.43);
+      box-shadow:0 0 0 3px rgba(118,94,255,.06);
+    }
+
+    .modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .secondary{
+      border:1px solid rgba(255,255,255,.09);
+      color:#a0abc0;
+      background:transparent;
+      border-radius:12px;
+      padding:11px 14px;
+      cursor:pointer;
+    }
+
+    .message{
+      margin-top:12px;
+      font-size:12px;
+      display:none;
+    }
+
+    .message.error{
+      display:block;
+      color:#ff9cab;
+    }
+
+    .message.success{
+      display:block;
+      color:#9ce2be;
+    }
+
+    @media(max-width:900px){
+      .layout{
+        grid-template-columns:1fr;
+      }
+
+      .sidebar{
+        position:static;
+        height:auto;
+        border-right:0;
+        border-bottom:1px solid rgba(255,255,255,.07);
+      }
+
+      .nav{
+        grid-template-columns:repeat(3,1fr);
+      }
+
+      .sidebar-bottom{
+        margin-top:18px;
+      }
+
+      .main{
+        padding:22px;
+      }
+
+      .stats{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:620px){
+      .topbar{
+        flex-direction:column;
+      }
+
+      .form-grid{
+        grid-template-columns:1fr;
+      }
+
+      .field.full{
+        grid-column:auto;
+      }
+
+      .request-card{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+
+    <a class="brand" href="dashboard.html">
+      <span class="brand-mark">GP</span>
+      <span>Go<em>Procures</em></span>
+    </a>
+
+    <nav class="nav">
+      <a class="active" href="dashboard.html">
+        Dashboard
+      </a>
+
+      <a href="#" id="navNewRequest">
+        New Request
+      </a>
+
+      <a href="index.html">
+        Procurement AI
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+
+      <div class="user-mini">
+        <strong id="userName">
+          Loading...
+        </strong>
+
+        <span id="userEmail"></span>
+      </div>
+
+      <button
+        class="logout"
+        id="logoutButton"
+        type="button"
+      >
+        Sign out
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <main class="main">
+
+    <div class="topbar">
+
+      <div>
+        <div class="eyebrow">
+          Client Portal
+        </div>
+
+        <h1>
+          My Procurement Dashboard
+        </h1>
+
+        <p class="sub">
+          Track requests, quotations and sourcing progress.
+        </p>
+      </div>
+
+      <button
+        class="primary"
+        id="newRequestButton"
+        type="button"
+      >
+        + New Procurement Request
+      </button>
+
+    </div>
+
+
+    <section class="stats">
+
+      <div class="stat">
+        <small>
+          Active requests
+        </small>
+
+        <strong id="activeCount">
+          0
+        </strong>
+      </div>
+
+
+      <div class="stat">
+        <small>
+          Quotes ready
+        </small>
+
+        <strong id="quotesCount">
+          0
+        </strong>
+      </div>
+
+
+      <div class="stat">
+        <small>
+          Completed
+        </small>
+
+        <strong id="completedCount">
+          0
+        </strong>
+      </div>
+
+    </section>
+
+
+    <section class="panel">
+
+      <div class="panel-head">
+        <h2>
+          My Procurement Requests
+        </h2>
+
+        <span id="requestCountLabel">
+          Loading...
+        </span>
+      </div>
+
+      <div
+        class="requests"
+        id="requestList"
+      >
+        <div class="empty">
+          Loading your procurement requests...
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+<div
+  class="modal-backdrop"
+  id="requestModal"
+>
+
+  <div class="modal">
+
+    <div class="modal-top">
+
+      <h3>
+        New Procurement Request
+      </h3>
+
+      <button
+        class="close"
+        id="closeModal"
+        type="button"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <form id="requestForm">
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="category">
+            Category
+          </label>
+
+          <select id="category">
+            <option value="General Procurement">
+              General Procurement
+            </option>
+
+            <option value="Steel & Construction">
+              Steel & Construction
+            </option>
+
+            <option value="Electrical">
+              Electrical
+            </option>
+
+            <option value="Machinery & Spares">
+              Machinery & Spares
+            </option>
+
+            <option value="Plumbing & Water">
+              Plumbing & Water
+            </option>
+
+            <option value="Agriculture & Fertilizer">
+              Agriculture & Fertilizer
+            </option>
+
+            <option value="Packaging">
+              Packaging
+            </option>
+
+            <option value="Other">
+              Other
+            </option>
+          </select>
+        </div>
+
+
+        <div class="field">
+          <label for="region">
+            Delivery location
+          </label>
+
+          <input
+            id="region"
+            type="text"
+            placeholder="e.g. Matsapha, Eswatini"
+            required
+          >
+        </div>
+
+
+        <div class="field">
+          <label for="quantity">
+            Quantity
+          </label>
+
+          <input
+            id="quantity"
+            type="text"
+            placeholder="e.g. 5000"
+          >
+        </div>
+
+
+        <div class="field">
+          <label for="urgency">
+            Required by
+          </label>
+
+          <input
+            id="urgency"
+            type="text"
+            placeholder="e.g. Within 2 weeks"
+          >
+        </div>
+
+
+        <div class="field full">
+          <label for="requestText">
+            What do you need?
+          </label>
+
+          <textarea
+            id="requestText"
+            placeholder="Describe the item, specification, brand, dimensions, application or any other information you have."
+            required
+          ></textarea>
+        </div>
+
+      </div>
+
+
+      <div
+        id="formMessage"
+        class="message"
+      ></div>
+
+
+      <div class="modal-actions">
+
+        <button
+          class="secondary"
+          id="cancelRequest"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="primary"
+          id="submitRequest"
+          type="submit"
+        >
+          Submit Request
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script type="module">
+
+  import {
+    createClient
+  } from
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+
+  const SUPABASE_URL =
+    "https://oulckllygepbqbctzeka.supabase.co";
+
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI";
+
+
+  const supabase =
+    createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+  let currentUser = null;
+
+
+  const requestList =
+    document.getElementById(
+      "requestList"
+    );
+
+
+  const requestModal =
+    document.getElementById(
+      "requestModal"
+    );
+
+
+  const formMessage =
+    document.getElementById(
+      "formMessage"
+    );
+
+
+  function cleanStatus(status) {
+
+    return String(
+      status || "New"
+    )
+      .trim()
+      .toLowerCase();
+
+  }
+
+
+  function isCompleted(status) {
+
+    const value =
+      cleanStatus(status);
+
+    return [
+      "completed",
+      "complete",
+      "closed",
+      "delivered"
+    ].includes(value);
+
+  }
+
+
+  function isQuoteReady(status) {
+
+    const value =
+      cleanStatus(status);
+
+    return (
+      value.includes("quote") ||
+      value.includes("quotation")
+    );
+
+  }
+
+
+  function statusClass(status) {
+
+    if (isCompleted(status)) {
+      return "complete";
+    }
+
+    if (isQuoteReady(status)) {
+      return "ready";
+    }
+
+    return "";
+
+  }
+
+
+  function formatDate(value) {
+
+    if (!value) return "";
+
+    return new Intl.DateTimeFormat(
+      "en",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }
+    ).format(
+      new Date(value)
+    );
+
+  }
+
+
+  function escapeHtml(value) {
+
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  }
+
+
+  function displayName(user) {
+
+    return (
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "Client"
+    );
+
+  }
+
+
+  async function requireUser() {
+
+    const {
+      data: {
+        session
+      }
+    } =
+      await supabase.auth.getSession();
+
+
+    if (!session?.user) {
+
+      window.location.replace(
+        "login.html"
+      );
+
+      return null;
+    }
+
+
+    currentUser =
+      session.user;
+
+
+    document.getElementById(
+      "userName"
+    ).textContent =
+      displayName(currentUser);
+
+
+    document.getElementById(
+      "userEmail"
+    ).textContent =
+      currentUser.email || "";
+
+
+    return currentUser;
+
+  }
+
+
+  async function loadDashboard() {
+
+    if (!currentUser) return;
+
+
+    const {
+      data: requests,
+      error
+    } =
+      await supabase
+        .from("requests")
+        .select(
+          `
+            id,
+            request_text,
+            status,
+            summary,
+            created_at,
+            updated_at,
+            region,
+            category,
+            quantity,
+            urgency
+          `
+        )
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
+
+
+    if (error) {
+
+      console.error(
+        "Request loading error:",
+        error
+      );
+
+
+      requestList.innerHTML =
+        `
+          <div class="empty">
+            <strong>
+              We couldn't load your requests.
+            </strong>
+
+            Please refresh the page.
+          </div>
+        `;
+
+      return;
+    }
+
+
+    const rows =
+      requests || [];
+
+
+    let quoteRows = [];
+
+
+    if (rows.length > 0) {
+
+      const requestIds =
+        rows.map(
+          row => row.id
+        );
+
+
+      const {
+        data: quotes,
+        error: quoteError
+      } =
+        await supabase
+          .from("quotes")
+          .select(
+            "id,request_id,status"
+          )
+          .in(
+            "request_id",
+            requestIds
+          );
+
+
+      if (!quoteError) {
+        quoteRows =
+          quotes || [];
+      }
+
+    }
+
+
+    const quoteCounts =
+      new Map();
+
+
+    quoteRows.forEach(
+      quote => {
+
+        const current =
+          quoteCounts.get(
+            quote.request_id
+          ) || 0;
+
+
+        quoteCounts.set(
+          quote.request_id,
+          current + 1
+        );
+
+      }
+    );
+
+
+    const activeCount =
+      rows.filter(
+        row =>
+          !isCompleted(
+            row.status
+          )
+      ).length;
+
+
+    const completedCount =
+      rows.filter(
+        row =>
+          isCompleted(
+            row.status
+          )
+      ).length;
+
+
+    const quotesReadyCount =
+      rows.filter(
+        row =>
+          (
+            quoteCounts.get(
+              row.id
+            ) || 0
+          ) > 0
+      ).length;
+
+
+    document.getElementById(
+      "activeCount"
+    ).textContent =
+      activeCount;
+
+
+    document.getElementById(
+      "completedCount"
+    ).textContent =
+      completedCount;
+
+
+    document.getElementById(
+      "quotesCount"
+    ).textContent =
+      quotesReadyCount;
+
+
+    document.getElementById(
+      "requestCountLabel"
+    ).textContent =
+      `${rows.length} request${
+        rows.length === 1
+          ? ""
+          : "s"
+      }`;
+
+
+    if (rows.length === 0) {
+
+      requestList.innerHTML =
+        `
+          <div class="empty">
+
+            <strong>
+              No procurement requests yet.
+            </strong>
+
+            Start your first request and
+            GoProcures will take it from there.
+
+          </div>
+        `;
+
+      return;
+    }
+
+
+    requestList.innerHTML =
+      rows.map(
+        row => {
+
+          const quotes =
+            quoteCounts.get(
+              row.id
+            ) || 0;
+
+
+          const summary =
+            row.summary ||
+            row.request_text;
+
+
+          return `
+            <div class="request-card">
+
+              <div>
+
+                <div class="request-title">
+                  ${escapeHtml(
+                    row.category ||
+                    "Procurement Request"
+                  )}
+                </div>
+
+                <div class="request-meta">
+
+                  <span>
+                    GP-${row.id}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      row.region || ""
+                    )}
+                  </span>
+
+                  <span>
+                    ${formatDate(
+                      row.created_at
+                    )}
+                  </span>
+
+                  <span>
+                    ${quotes}
+                    quote${
+                      quotes === 1
+                        ? ""
+                        : "s"
+                    }
+                  </span>
+
+                </div>
+
+                <div class="request-summary">
+                  ${escapeHtml(
+                    summary
+                  )}
+                </div>
+
+              </div>
+
+
+              <div
+                class="status ${statusClass(
+                  row.status
+                )}"
+              >
+                ${escapeHtml(
+                  row.status ||
+                  "New"
+                )}
+              </div>
+
+            </div>
+          `;
+
+        }
+      )
+      .join("");
+
+  }
+
+
+  function openModal() {
+
+    formMessage.className =
+      "message";
+
+    formMessage.textContent =
+      "";
+
+    requestModal.classList.add(
+      "open"
+    );
+
+  }
+
+
+  function closeModal() {
+
+    requestModal.classList.remove(
+      "open"
+    );
+
+  }
+
+
+  document.getElementById(
+    "newRequestButton"
+  ).onclick =
+    openModal;
+
+
+  document.getElementById(
+    "navNewRequest"
+  ).onclick =
+    event => {
+
+      event.preventDefault();
+
+      openModal();
+
+    };
+
+
+  document.getElementById(
+    "closeModal"
+  ).onclick =
+    closeModal;
+
+
+  document.getElementById(
+    "cancelRequest"
+  ).onclick =
+    closeModal;
+
+
+  requestModal.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        requestModal
+      ) {
+        closeModal();
+      }
+
+    }
+  );
+
+
+  document.getElementById(
+    "requestForm"
+  ).addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      if (!currentUser) {
+        return;
+      }
+
+
+      const submitButton =
+        document.getElementById(
+          "submitRequest"
+        );
+
+
+      submitButton.disabled =
+        true;
+
+
+      submitButton.textContent =
+        "Submitting...";
+
+
+      const category =
+        document.getElementById(
+          "category"
+        ).value;
+
+
+      const region =
+        document.getElementById(
+          "region"
+        ).value.trim();
+
+
+      const quantity =
+        document.getElementById(
+          "quantity"
+        ).value.trim();
+
+
+      const urgency =
+        document.getElementById(
+          "urgency"
+        ).value.trim();
+
+
+      const requestText =
+        document.getElementById(
+          "requestText"
+        ).value.trim();
+
+
+      const {
+        error
+      } =
+        await supabase
+          .from("requests")
+          .insert({
+
+            auth_user_id:
+              currentUser.id,
+
+            client_name:
+              displayName(
+                currentUser
+              ),
+
+            client_email:
+              currentUser.email,
+
+            region,
+
+            request_text:
+              requestText,
+
+            status:
+              "New",
+
+            category,
+
+            quantity:
+              quantity || null,
+
+            urgency:
+              urgency || null
+
+          });
+
+
+      if (error) {
+
+        console.error(
+          error
+        );
+
+
+        formMessage.textContent =
+          error.message;
+
+
+        formMessage.className =
+          "message error";
+
+
+      } else {
+
+        formMessage.textContent =
+          "Your procurement request has been created.";
+
+
+        formMessage.className =
+          "message success";
+
+
+        document.getElementById(
+          "requestForm"
+        ).reset();
+
+
+        await loadDashboard();
+
+
+        setTimeout(
+          closeModal,
+          600
+        );
+
+      }
+
+
+      submitButton.disabled =
+        false;
+
+
+      submitButton.textContent =
+        "Submit Request";
+
+    }
+  );
+
+
+  document.getElementById(
+    "logoutButton"
+  ).onclick =
+    async () => {
+
+      await supabase.auth.signOut();
+
+      window.location.replace(
+        "login.html"
+      );
+
+    };
+
+
+  async function start() {
+
+    const user =
+      await requireUser();
+
+
+    if (user) {
+
+      await loadDashboard();
+
+    }
+
+  }
+
+
+  start();
+
+</script>
+
+</body>
+</html>
