@@ -389,6 +389,46 @@
       white-space:nowrap;
     }
 
+    .quote-list{
+      margin-top:12px;
+      display:grid;
+      gap:9px;
+    }
+
+    .quote-card-client{
+      border:1px solid rgba(121,100,255,.18);
+      background:rgba(121,100,255,.045);
+      border-radius:13px;
+      padding:12px;
+    }
+
+    .quote-card-client.approved{
+      border-color:rgba(61,190,128,.22);
+      background:rgba(61,190,128,.045);
+    }
+
+    .quote-card-client.rejected{
+      border-color:rgba(255,98,118,.18);
+      background:rgba(255,98,118,.035);
+    }
+
+    .quote-head-client{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .quote-head-client strong{font-size:12px;}
+    .quote-price{color:#fff;font-size:13px;font-weight:800;white-space:nowrap;}
+    .quote-meta-client{margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;color:#7e8ba4;font-size:10px;}
+    .quote-actions-client{margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;}
+    .quote-btn{border-radius:9px;padding:7px 9px;font-size:10px;font-weight:800;cursor:pointer;}
+    .quote-btn.open{border:1px solid rgba(79,145,255,.20);background:rgba(79,145,255,.07);color:#b9d9ff;}
+    .quote-btn.approve{border:1px solid rgba(61,190,128,.20);background:rgba(61,190,128,.07);color:#bcebd2;}
+    .quote-btn.reject{border:1px solid rgba(255,98,118,.18);background:rgba(255,98,118,.05);color:#ffb9c3;}
+    .quote-decision{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font-size:8px;letter-spacing:.7px;font-weight:850;text-transform:uppercase;color:#aab4c6;}
+
     .empty{
       padding:40px 20px;
       text-align:center;
@@ -1151,7 +1191,7 @@
         await supabase
           .from("quotes")
           .select(
-            "id,request_id,status"
+            "id,request_id,status,supplier_name,total_price,currency,delivery_days,payment_terms,quote_file_name,file_storage_path,client_decision,client_decision_at,visible_to_client,published_at"
           )
           .in(
             "request_id",
@@ -1195,6 +1235,15 @@
       const group = fileGroups.get(file.request_id) || [];
       group.push(file);
       fileGroups.set(file.request_id, group);
+    });
+
+
+    const quoteGroups = new Map();
+
+    quoteRows.forEach(quote => {
+      const group = quoteGroups.get(quote.request_id) || [];
+      group.push(quote);
+      quoteGroups.set(quote.request_id, group);
     });
 
 
