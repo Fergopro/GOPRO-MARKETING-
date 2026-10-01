@@ -35,6 +35,7 @@ let portalAuthReady = null;
 
 let conversation = [];
 let firstLeadMessage = "";
+let currentAIRequestId = null;
 
 let capturedName = "";
 let capturedEmail = "";
@@ -285,6 +286,69 @@ function extractContactDetails(text) {
 }
 
 /* =========================================================
+   SAVE AUTHENTICATED AI CHAT AS A PROCUREMENT REQUEST
+========================================================= */
+
+function portalDisplayName() {
+  if (!portalUser) return "Client";
+
+  return (
+    portalUser.user_metadata?.full_name ||
+    portalUser.user_metadata?.name ||
+    portalUser.email?.split("@")[0] ||
+    "Client"
+  );
+}
+
+async function createAIProcurementRequest(firstMessage) {
+  if (!portalSupabase || !portalUser || currentAIRequestId) {
+    return currentAIRequestId;
+  }
+
+  const { data, error } = await portalSupabase
+    .from("requests")
+    .insert({
+      auth_user_id: portalUser.id,
+      client_name: portalDisplayName(),
+      client_email: portalUser.email,
+      region: "To be confirmed",
+      request_text: firstMessage,
+      status: "New",
+      category: "AI Procurement",
+      ai_conversation: conversation
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Could not create AI procurement request:", error);
+    throw error;
+  }
+
+  currentAIRequestId = data.id;
+
+  return currentAIRequestId;
+}
+
+async function updateAIProcurementRequest() {
+  if (!portalSupabase || !portalUser || !currentAIRequestId) {
+    return;
+  }
+
+  const { error } = await portalSupabase
+    .from("requests")
+    .update({
+      ai_conversation: conversation,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", currentAIRequestId);
+
+  if (error) {
+    console.error("Could not update AI procurement request:", error);
+  }
+}
+
+/* =========================================================
    SECURE LEAD SAVING
 ========================================================= */
 
@@ -438,10 +502,20 @@ async function submitAIMessage(text) {
     content: text
   });
 
-  /*
-    Start saving the lead immediately.
+  try {
+    if (!currentAIRequestId) {
+      await createAIProcurementRequest(firstLeadMessage);
+    } else {
+      await updateAIProcurementRequest();
+    }
+  } catch (error) {
+    console.error("AI request save error:", error);
+  }
 
-    This does not delay the AI response.
+  /*
+    Keep the legacy lead snapshot in the background for now.
+    The authenticated procurement request above is what powers
+    the customer's dashboard.
   */
 
   queueLeadSave();
@@ -474,6 +548,8 @@ async function submitAIMessage(text) {
       role: "assistant",
       content: reply
     });
+
+    await updateAIProcurementRequest();
 
     /*
       Update the same lead with the AI response.
