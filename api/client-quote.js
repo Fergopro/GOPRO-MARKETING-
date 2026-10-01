@@ -22,15 +22,20 @@ export default async function handler(req,res){
 
   const body=req.body||{};
   const quoteId=Number(body.quote_id);
+  const action=String(body.action||"decision").toLowerCase();
   const decision=String(body.decision||"").toLowerCase();
 
-  if(!quoteId||!["approved","rejected"].includes(decision)){
+  if(!quoteId){
+    return res.status(400).json({error:"Invalid quote"});
+  }
+
+  if(action==="decision"&&!["approved","rejected"].includes(decision)){
     return res.status(400).json({error:"Invalid quote decision"});
   }
 
   try{
     const q=await fetch(
-      U+"/rest/v1/quotes?id=eq."+quoteId+"&select=id,request_id",
+      U+"/rest/v1/quotes?id=eq."+quoteId+"&select=id,request_id,visible_to_client,file_storage_path",
       {headers:{apikey:secret,Authorization:"Bearer "+secret}}
     );
     if(!q.ok) throw new Error(await q.text());
@@ -44,7 +49,37 @@ export default async function handler(req,res){
     );
     if(!own.ok) throw new Error(await own.text());
     const owned=await own.json();
-    if(!owned.length) return res.status(403).json({error:"You do not have access to this quote"});
+    if(!owned.length||quote.visible_to_client!==true) return res.status(403).json({error:"You do not have access to this quote"});
+
+    if(action==="file"){
+      if(!quote.file_storage_path) return res.status(404).json({error:"No quote document is attached"});
+
+      const path=String(quote.file_storage_path);
+
+      const signed=await fetch(
+        U+"/storage/v1/object/sign/client-documents/"+path.split("/").map(encodeURIComponent).join("/"),
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            apikey:secret,
+            Authorization:"Bearer "+secret
+          },
+          body:JSON.stringify({expiresIn:300})
+        }
+      );
+
+      if(!signed.ok) throw new Error(await signed.text());
+
+      const result=await signed.json();
+      let url=result.signedURL||result.signedUrl||result.url;
+
+      if(url&&!url.startsWith("http")){
+        url=U+"/storage/v1"+url;
+      }
+
+      return res.status(200).json({url});
+    }
 
     const update=await fetch(
       U+"/rest/v1/quotes?id=eq."+quoteId,
