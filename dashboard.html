@@ -597,6 +597,10 @@
       <a href="index.html">
         Procurement AI
       </a>
+
+      <a href="admin.html" id="adminConsoleLink" style="display:none">
+        Admin Console
+      </a>
     </nav>
 
     <div class="sidebar-bottom">
@@ -1046,6 +1050,21 @@
       "userEmail"
     ).textContent =
       currentUser.email || "";
+
+    const {
+      data: adminRows
+    } =
+      await supabase
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", currentUser.id)
+        .limit(1);
+
+    if (adminRows?.length) {
+      document.getElementById(
+        "adminConsoleLink"
+      ).style.display = "block";
+    }
 
 
     return currentUser;
