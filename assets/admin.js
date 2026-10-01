@@ -274,6 +274,20 @@ function openRequest(id){
       ).join("")
     : '<div class="empty">No client attachments yet.</div>';
 
+  const comparisonHtml=qs.length
+    ? '<div style="overflow:auto;margin-bottom:12px"><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="color:#7f8da4;text-align:left"><th style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">Supplier</th><th style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">Total</th><th style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">Delivery</th><th style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">Client</th><th style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">Visible</th></tr></thead><tbody>'+
+        qs.map(q=>
+          '<tr>'+
+            '<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+esc(q.supplier_name||"Supplier")+'</td>'+
+            '<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+money(q.total_price,q.currency)+'</td>'+
+            '<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+(q.delivery_days??"—")+' days</td>'+
+            '<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+esc(q.client_decision||"pending")+'</td>'+
+            '<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">'+(q.visible_to_client?"Yes":"No")+'</td>'+
+          '</tr>'
+        ).join("")+
+      '</tbody></table></div>'
+    : '';
+
   const quotesHtml=qs.length
     ? qs.map(q=>{
         const decision=q.client_decision||"pending";
@@ -343,6 +357,7 @@ function openRequest(id){
 
     '<div class="section">'+
       '<h3>Supplier Quotes & Client Approval</h3>'+
+      comparisonHtml+
       quotesHtml+
       '<div class="form-row" style="margin-top:12px">'+
         '<div class="field"><label>Supplier</label><input id="qSupplier"></div>'+
