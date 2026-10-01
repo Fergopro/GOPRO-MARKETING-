@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoProcures | Admin Control Centre</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="admin.html"><span class="mark">GP</span><span>Go<em>Procures</em></span></a>
+    <div class="admin-badge">ADMIN CONTROL</div>
+    <nav class="nav">
+      <a class="active" href="admin.html">Procurements</a>
+      <a href="dashboard.html">Client View</a>
+      <a href="index.html">Procurement AI</a>
+    </nav>
+    <div class="side-bottom">
+      <small id="adminEmail">Checking access...</small>
+      <button class="ghost" id="signOut">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Worldwide Procurement Operations</div>
+        <h1>Admin Control Centre</h1>
+        <p>Manage client requests, documents, supplier quotations and procurement progress.</p>
+      </div>
+      <button class="refresh" id="refresh">↻ Refresh data</button>
+    </div>
+
+    <div id="notice" class="notice"></div>
+
+    <section class="stats">
+      <div class="stat"><span>Total requests</span><strong id="sRequests">0</strong></div>
+      <div class="stat"><span>Active</span><strong id="sActive">0</strong></div>
+      <div class="stat"><span>Quotes</span><strong id="sQuotes">0</strong></div>
+      <div class="stat"><span>Client files</span><strong id="sFiles">0</strong></div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><h2>All Procurement Requests</h2><span id="reqCount">Loading...</span></div>
+        <div id="requests"><div class="empty">Loading procurement activity...</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Recent Leads</h2><span>Latest 50</span></div>
+        <div id="leads"><div class="empty">Loading leads...</div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="drawer" id="drawer">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="eyebrow">Procurement File</div>
+        <h2 id="dTitle">Request</h2>
+        <p id="dMeta"></p>
+      </div>
+      <button class="close" id="closeDrawer">×</button>
+    </div>
+    <div id="detail"></div>
+  </div>
+</div>
+
+<script type="module" src="assets/admin.js"></script>
+</body>
+</html>
