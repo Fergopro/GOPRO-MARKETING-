@@ -62,10 +62,17 @@ export default async function handler(req,res){
 
     if(b.action==="publish_quote"){
       const id=Number(b.quote_id);
+      const requestId=Number(b.request_id);
       const visible=Boolean(b.visible);
       if(!id) return res.status(400).json({error:"Invalid quote"});
       const r=await fetch(U+"/rest/v1/quotes?id=eq."+id,{method:"PATCH",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=minimal"},body:JSON.stringify({visible_to_client:visible,published_at:visible?new Date().toISOString():null,status:visible?"published":"received"})});
       if(!r.ok) throw new Error(await r.text());
+
+      if(visible&&requestId){
+        const rr=await fetch(U+"/rest/v1/requests?id=eq."+requestId,{method:"PATCH",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=minimal"},body:JSON.stringify({status:"Client Review",updated_at:new Date().toISOString()})});
+        if(!rr.ok) throw new Error(await rr.text());
+      }
+
       return res.status(200).json({success:true});
     }
 
