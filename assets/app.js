@@ -33,10 +33,6 @@ let portalSupabase = null;
 let portalUser = null;
 let portalAuthReady = null;
 
-let portalSupabase = null;
-let portalUser = null;
-let portalAuthReady = null;
-
 let conversation = [];
 let firstLeadMessage = "";
 
@@ -415,13 +411,6 @@ async function askGoProcuresAI(text) {
 
 async function submitAIMessage(text) {
   if (aiBusy) return;
-
-  await initPortalAuth();
-
-  if (!portalUser) {
-    window.location.href = "login.html";
-    return;
-  }
 
   await initPortalAuth();
 
