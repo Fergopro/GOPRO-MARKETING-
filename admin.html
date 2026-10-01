@@ -34,6 +34,33 @@
 
     <div id="notice" class="notice"></div>
 
+    <section class="opsbar">
+      <div class="searchbox">
+        <span>⌕</span>
+        <input id="requestSearch" type="search" placeholder="Search GP number, client, category, location or requirement">
+      </div>
+      <select id="statusFilter" class="filter-select">
+        <option value="">All statuses</option>
+        <option>New</option>
+        <option>Analysing</option>
+        <option>Sourcing</option>
+        <option>Awaiting Quotes</option>
+        <option>Quotes Ready</option>
+        <option>Client Review</option>
+        <option>Client Approved</option>
+        <option>Ordered</option>
+        <option>Completed</option>
+        <option>Closed</option>
+      </select>
+      <select id="quoteFilter" class="filter-select">
+        <option value="">All quote states</option>
+        <option value="none">No quotes</option>
+        <option value="unpublished">Unpublished quotes</option>
+        <option value="published">Published to client</option>
+        <option value="approved">Client approved</option>
+      </select>
+    </section>
+
     <section class="stats">
       <div class="stat"><span>Total requests</span><strong id="sRequests">0</strong></div>
       <div class="stat"><span>Active</span><strong id="sActive">0</strong></div>
