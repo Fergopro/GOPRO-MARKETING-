@@ -33,6 +33,10 @@ let portalSupabase = null;
 let portalUser = null;
 let portalAuthReady = null;
 
+let portalSupabase = null;
+let portalUser = null;
+let portalAuthReady = null;
+
 let conversation = [];
 let firstLeadMessage = "";
 
@@ -419,6 +423,13 @@ async function submitAIMessage(text) {
     return;
   }
 
+  await initPortalAuth();
+
+  if (!portalUser) {
+    window.location.href = "login.html";
+    return;
+  }
+
   text = String(text || "").trim();
 
   if (!text) return;
@@ -638,6 +649,135 @@ if (form) {
 
 /* =========================================================
    AUTH-AWARE NAVIGATION + MOBILE MENU
+========================================================= */
+
+async function initPortalAuth() {
+  if (portalAuthReady) return portalAuthReady;
+
+  portalAuthReady = (async () => {
+    try {
+      const module = await import(
+        "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+      );
+
+      portalSupabase = module.createClient(
+        GP.supabaseUrl,
+        GP.supabaseKey
+      );
+
+      const {
+        data: { session }
+      } = await portalSupabase.auth.getSession();
+
+      portalUser = session?.user || null;
+      updatePortalUI();
+
+      portalSupabase.auth.onAuthStateChange((_event, session) => {
+        portalUser = session?.user || null;
+        updatePortalUI();
+      });
+    } catch (error) {
+      console.error("GoProcures auth navigation error:", error);
+      updatePortalUI();
+    }
+  })();
+
+  return portalAuthReady;
+}
+
+function updatePortalUI() {
+  const loggedIn = Boolean(portalUser);
+
+  document.querySelectorAll(".auth-dashboard-link").forEach((el) => {
+    el.hidden = !loggedIn;
+  });
+
+  document.querySelectorAll(".auth-login-link").forEach((el) => {
+    el.hidden = loggedIn;
+  });
+
+  document.querySelectorAll(".auth-signout-link").forEach((el) => {
+    el.hidden = !loggedIn;
+  });
+
+  document.querySelectorAll(".auth-ai-entry").forEach((el) => {
+    el.href = loggedIn ? "index.html#assistant" : "login.html";
+    el.textContent = loggedIn
+      ? "Open Procurement AI →"
+      : "Start a procurement →";
+  });
+
+  const banner = q("#aiAuthBanner");
+  const userStrip = q("#aiUserStrip");
+  const userLabel = q("#aiUserLabel");
+
+  if (banner) banner.hidden = loggedIn;
+  if (userStrip) userStrip.hidden = !loggedIn;
+
+  if (userLabel && portalUser) {
+    const name =
+      portalUser.user_metadata?.full_name ||
+      portalUser.user_metadata?.name ||
+      portalUser.email ||
+      "Client";
+
+    userLabel.textContent = "Signed in as " + name;
+  }
+
+  if (aiInput) {
+    aiInput.disabled = !loggedIn;
+    aiInput.placeholder = loggedIn
+      ? "e.g. I need 500 IBR sheets, 6m long..."
+      : "Sign in to start a secure procurement request";
+  }
+
+  if (aiSubmit) {
+    aiSubmit.disabled = !loggedIn;
+  }
+
+  document.querySelectorAll(".js-example").forEach((button) => {
+    button.disabled = !loggedIn;
+  });
+}
+
+const mobileToggle = q("#mobileToggle");
+const mobileMenu = q("#mobileMenu");
+
+if (mobileToggle && mobileMenu) {
+  mobileToggle.addEventListener("click", () => {
+    const open = mobileMenu.classList.toggle("open");
+    mobileToggle.classList.toggle("open", open);
+    mobileToggle.setAttribute("aria-expanded", String(open));
+    document.body.classList.toggle("menu-open", open);
+  });
+
+  mobileMenu.querySelectorAll("a,button").forEach((item) => {
+    item.addEventListener("click", () => {
+      mobileMenu.classList.remove("open");
+      mobileToggle.classList.remove("open");
+      mobileToggle.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("menu-open");
+    });
+  });
+}
+
+document.querySelectorAll(".auth-signout-link").forEach((button) => {
+  button.addEventListener("click", async () => {
+    await initPortalAuth();
+
+    if (portalSupabase) {
+      await portalSupabase.auth.signOut();
+    }
+
+    window.location.href = "login.html";
+  });
+});
+
+void initPortalAuth();
+
+
+/* =========================================================
+   AUTH-AWARE NAVIGATION + WORKING MOBILE MENU
 ========================================================= */
 
 async function initPortalAuth() {
