@@ -416,6 +416,7 @@ function openRequest(id){
         await call("POST",{
           action:"publish_quote",
           quote_id:Number(button.dataset.id),
+          request_id:id,
           visible:button.dataset.visible==="true"
         });
 
