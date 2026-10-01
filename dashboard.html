@@ -1363,6 +1363,54 @@
           const files =
             fileGroups.get(row.id) || [];
 
+          const requestQuotes =
+            quoteGroups.get(row.id) || [];
+
+          const quoteHtml =
+            requestQuotes.length
+              ? `
+                <div class="quote-list">
+                  ${requestQuotes.map(quote => {
+                    const decision = quote.client_decision || "pending";
+                    const price = quote.total_price == null
+                      ? "Price pending"
+                      : `${escapeHtml(quote.currency || "ZAR")} ${Number(quote.total_price).toLocaleString()}`;
+
+                    return `
+                      <div class="quote-card-client ${decision}">
+                        <div class="quote-head-client">
+                          <div>
+                            <strong>${escapeHtml(quote.supplier_name || "Supplier Quote")}</strong>
+                            <div class="quote-meta-client">
+                              <span>${quote.delivery_days ?? "—"} day delivery</span>
+                              <span>${escapeHtml(quote.payment_terms || "Terms not specified")}</span>
+                            </div>
+                          </div>
+                          <div class="quote-price">${price}</div>
+                        </div>
+
+                        <div class="quote-actions-client">
+                          ${quote.file_storage_path ? `
+                            <button type="button" class="quote-btn open js-open-quote" data-quote-id="${quote.id}">
+                              Open quote
+                            </button>
+                          ` : ""}
+
+                          <span class="quote-decision">${escapeHtml(decision)}</span>
+
+                          ${decision === "pending" ? `
+                            <button type="button" class="quote-btn approve js-quote-decision" data-quote-id="${quote.id}" data-decision="approved">Approve</button>
+                            <button type="button" class="quote-btn reject js-quote-decision" data-quote-id="${quote.id}" data-decision="rejected">Reject</button>
+                          ` : ""}
+                        </div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              `
+              : "";
+
+
           const filesHtml =
             files.length
               ? `
@@ -1446,6 +1494,8 @@
                 </div>
 
                 ${filesHtml}
+
+                ${quoteHtml}
 
               </div>
 
