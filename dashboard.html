@@ -1614,7 +1614,115 @@
   }
 
 
+  async function clientQuoteAction(payload) {
+    const {
+      data: {
+        session
+      }
+    } =
+      await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      window.location.replace("login.html");
+      return null;
+    }
+
+    const response =
+      await fetch(
+        "/api/client-quote",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:
+              "Bearer " +
+              session.access_token
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        "Quote action failed."
+      );
+    }
+
+    return result;
+  }
+
+
   requestList.addEventListener("click", async event => {
+    const decisionButton =
+      event.target.closest(".js-quote-decision");
+
+    if (decisionButton) {
+      const decision =
+        decisionButton.dataset.decision;
+
+      const confirmed =
+        window.confirm(
+          decision === "approved"
+            ? "Approve this supplier quote?"
+            : "Reject this supplier quote?"
+        );
+
+      if (!confirmed) return;
+
+      try {
+        await clientQuoteAction({
+          action: "decision",
+          quote_id:
+            Number(
+              decisionButton.dataset.quoteId
+            ),
+          decision
+        });
+
+        await loadDashboard();
+
+      } catch (error) {
+        alert(error.message);
+      }
+
+      return;
+    }
+
+
+    const openQuoteButton =
+      event.target.closest(".js-open-quote");
+
+    if (openQuoteButton) {
+      try {
+        const result =
+          await clientQuoteAction({
+            action: "file",
+            quote_id:
+              Number(
+                openQuoteButton.dataset.quoteId
+              )
+          });
+
+        if (result?.url) {
+          window.open(
+            result.url,
+            "_blank",
+            "noopener,noreferrer"
+          );
+        }
+
+      } catch (error) {
+        alert(error.message);
+      }
+
+      return;
+    }
+
+
     const uploadButton =
       event.target.closest(".js-upload-file");
 
