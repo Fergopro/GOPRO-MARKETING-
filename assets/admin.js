@@ -253,6 +253,7 @@ function openRequest(id){
 
   const qs=(db.quotes||[]).filter(q=>q.request_id===id);
   const fs=(db.files||[]).filter(f=>f.request_id===id);
+  const entitlement=(db.entitlements||[]).find(e=>e.user_id===current.auth_user_id)||null;
   const convo=Array.isArray(current.ai_conversation)
     ? current.ai_conversation
     : [];
@@ -349,6 +350,23 @@ function openRequest(id){
     '</div>'+
 
     '<div class="section">'+
+      '<h3>Client Account & Voice AI</h3>'+
+      '<div class="detail">'+
+        '<small>Plan</small>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          '<span class="pill">'+esc(entitlement?.plan||"free")+'</span>'+
+          '<span style="font-size:10px;color:#7f8da4">Voice used: '+Number(entitlement?.voice_seconds_used||0)+' sec</span>'+
+          '<span style="font-size:10px;color:#7f8da4">Trial: '+(entitlement?.voice_trial_started_at?"used":"available")+'</span>'+
+        '</div>'+
+        '<div class="quote-actions" style="margin-top:10px">'+
+          '<button class="mini" id="makePro">Set Pro</button>'+
+          '<button class="mini" id="makeFree">Set Free</button>'+
+          '<button class="mini" id="resetVoiceTrial">Reset Voice Trial</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="section">'+
       '<h3>Client Requirement</h3>'+
       '<div class="detail"><div>'+esc(current.request_text||"")+'</div></div>'+
     '</div>'+
@@ -383,6 +401,57 @@ function openRequest(id){
       sel.value=o.value;
     }
   });
+
+  const makePro=$("makePro");
+  const makeFree=$("makeFree");
+  const resetVoiceTrial=$("resetVoiceTrial");
+
+  if(makePro){
+    makePro.onclick=async()=>{
+      try{
+        await call("POST",{
+          action:"set_plan",
+          user_id:current.auth_user_id,
+          plan:"pro"
+        });
+        flash("Client upgraded to Pro");
+        await load();
+      }catch(e){
+        flash(e.message,"error");
+      }
+    };
+  }
+
+  if(makeFree){
+    makeFree.onclick=async()=>{
+      try{
+        await call("POST",{
+          action:"set_plan",
+          user_id:current.auth_user_id,
+          plan:"free"
+        });
+        flash("Client set to Free");
+        await load();
+      }catch(e){
+        flash(e.message,"error");
+      }
+    };
+  }
+
+  if(resetVoiceTrial){
+    resetVoiceTrial.onclick=async()=>{
+      try{
+        await call("POST",{
+          action:"reset_voice_trial",
+          user_id:current.auth_user_id
+        });
+        flash("Voice trial reset");
+        await load();
+      }catch(e){
+        flash(e.message,"error");
+      }
+    };
+  }
 
   $("saveStatus").onclick=async()=>{
     try{
