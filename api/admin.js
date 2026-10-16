@@ -29,17 +29,82 @@ export default async function handler(req,res){
 
   try{
     if(req.method==="GET"){
-      const [requests,quotes,files,leads]=await Promise.all([
+      const [requests,quotes,files,leads,entitlements]=await Promise.all([
         get(secret,"requests?select=*&order=created_at.desc"),
         get(secret,"quotes?select=*&order=id.desc"),
         get(secret,"request_files?select=*&order=created_at.desc"),
-        get(secret,"leads?select=id,name,email,company,message,status,created_at&order=created_at.desc&limit=50")
+        get(secret,"leads?select=id,name,email,company,message,status,created_at&order=created_at.desc&limit=50"),
+        get(secret,"user_entitlements?select=*&order=created_at.desc")
       ]);
-      return res.status(200).json({admin:{email:admin.email},requests,quotes,files,leads});
+      return res.status(200).json({admin:{email:admin.email},requests,quotes,files,leads,entitlements});
     }
 
     if(req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
     const b=req.body||{};
+
+    if(b.action==="set_plan"){
+      const userId=String(b.user_id||"").trim();
+      const plan=String(b.plan||"").toLowerCase();
+
+      if(!userId||!["free","pro"].includes(plan)){
+        return res.status(400).json({error:"Invalid account plan"});
+      }
+
+      const payload={
+        plan,
+        pro_started_at:plan==="pro"?new Date().toISOString():null,
+        pro_expires_at:null,
+        updated_at:new Date().toISOString()
+      };
+
+      const r=await fetch(
+        U+"/rest/v1/user_entitlements?user_id=eq."+encodeURIComponent(userId),
+        {
+          method:"PATCH",
+          headers:{
+            "Content-Type":"application/json",
+            apikey:secret,
+            Authorization:"Bearer "+secret,
+            Prefer:"return=minimal"
+          },
+          body:JSON.stringify(payload)
+        }
+      );
+
+      if(!r.ok) throw new Error(await r.text());
+
+      return res.status(200).json({success:true});
+    }
+
+    if(b.action==="reset_voice_trial"){
+      const userId=String(b.user_id||"").trim();
+
+      if(!userId){
+        return res.status(400).json({error:"Invalid user"});
+      }
+
+      const r=await fetch(
+        U+"/rest/v1/user_entitlements?user_id=eq."+encodeURIComponent(userId),
+        {
+          method:"PATCH",
+          headers:{
+            "Content-Type":"application/json",
+            apikey:secret,
+            Authorization:"Bearer "+secret,
+            Prefer:"return=minimal"
+          },
+          body:JSON.stringify({
+            voice_trial_started_at:null,
+            voice_trial_seconds:0,
+            updated_at:new Date().toISOString()
+          })
+        }
+      );
+
+      if(!r.ok) throw new Error(await r.text());
+
+      return res.status(200).json({success:true});
+    }
 
     if(b.action==="status"){
       const id=Number(b.request_id),status=String(b.status||"").trim().slice(0,60);
