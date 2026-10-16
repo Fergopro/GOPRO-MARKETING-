@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 
 const U = "https://oulckllygepbqbctzeka.supabase.co";
 const K = "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI";
@@ -12,7 +12,10 @@ function sign(value, secret){
 
 async function getUser(req){
   const h = req.headers.authorization || "";
-  if(!h.startsWith("Bearer ")) return null;
+
+  if(!h.startsWith("Bearer ")){
+    return null;
+  }
 
   const token = h.slice(7);
 
@@ -23,7 +26,9 @@ async function getUser(req){
     }
   });
 
-  if(!r.ok) return null;
+  if(!r.ok){
+    return null;
+  }
 
   return r.json();
 }
@@ -61,8 +66,8 @@ async function getEntitlement(secret, userId){
         Authorization: "Bearer " + secret,
         Prefer:"return=representation"
       },
-      body: JSON.stringify({
-        user_id: userId
+      body:JSON.stringify({
+        user_id:userId
       })
     }
   );
@@ -74,14 +79,60 @@ async function getEntitlement(secret, userId){
   return (await create.json())[0];
 }
 
+async function patchEntitlement(secret, userId, patch){
+  const r = await fetch(
+    U + "/rest/v1/user_entitlements?user_id=eq." +
+    encodeURIComponent(userId),
+    {
+      method:"PATCH",
+      headers:{
+        "Content-Type":"application/json",
+        apikey: secret,
+        Authorization: "Bearer " + secret,
+        Prefer:"return=representation"
+      },
+      body:JSON.stringify({
+        ...patch,
+        updated_at:new Date().toISOString()
+      })
+    }
+  );
+
+  if(!r.ok){
+    throw new Error(await r.text());
+  }
+
+  return (await r.json())[0];
+}
+
 function isPro(entitlement){
-  if(entitlement?.plan !== "pro") return false;
+  if(entitlement?.plan !== "pro"){
+    return false;
+  }
 
   if(!entitlement.pro_expires_at){
     return true;
   }
 
   return new Date(entitlement.pro_expires_at).getTime() > Date.now();
+}
+
+function accessPayload(entitlement){
+  const pro = isPro(entitlement);
+  const trialUsed =
+    Boolean(entitlement.voice_trial_started_at) ||
+    Number(entitlement.voice_trial_seconds || 0) >= 60;
+
+  return {
+    plan: pro ? "pro" : "free",
+    voice_enabled: pro || !trialUsed,
+    trial_available: !pro && !trialUsed,
+    trial_seconds: !pro && !trialUsed ? 60 : 0,
+    voice_seconds_used:
+      Number(entitlement.voice_seconds_used || 0),
+    pro_expires_at:
+      entitlement.pro_expires_at || null
+  };
 }
 
 export default async function handler(req, res){
@@ -110,70 +161,86 @@ export default async function handler(req, res){
   }
 
   try{
-    const entitlement = await getEntitlement(secret, user.id);
-    const action = String(req.body?.action || "status");
+    let entitlement =
+      await getEntitlement(secret, user.id);
+
+    const action =
+      String(req.body?.action || "status");
+
+    if(action === "start"){
+      const pro = isPro(entitlement);
+      const trialUsed =
+        Boolean(entitlement.voice_trial_started_at) ||
+        Number(entitlement.voice_trial_seconds || 0) >= 60;
+
+      if(!pro && trialUsed){
+        return res.status(402).json({
+          error:"Your free Voice AI minute has been used.",
+          upgrade_required:true
+        });
+      }
+
+      if(!pro){
+        entitlement =
+          await patchEntitlement(
+            secret,
+            user.id,
+            {
+              voice_trial_started_at:
+                new Date().toISOString(),
+              voice_trial_seconds:60
+            }
+          );
+      }
+
+      const cookieValue =
+        user.id + "." + sign(user.id, secret);
+
+      res.setHeader(
+        "Set-Cookie",
+        `${COOKIE}=${cookieValue}; Path=/; Max-Age=${pro ? 1800 : 120}; HttpOnly; Secure; SameSite=Lax`
+      );
+
+      return res.status(200).json({
+        ...accessPayload(entitlement),
+        session_type:pro ? "pro" : "trial",
+        max_seconds:pro ? null : 60
+      });
+    }
 
     if(action === "usage"){
       const seconds = Math.max(
         0,
         Math.min(
           3600,
-          Math.round(Number(req.body?.seconds) || 0)
+          Math.round(
+            Number(req.body?.seconds) || 0
+          )
         )
       );
 
       if(seconds > 0){
-        const total =
-          Number(entitlement.voice_seconds_used || 0) +
-          seconds;
-
-        const r = await fetch(
-          U + "/rest/v1/user_entitlements?user_id=eq." +
-          encodeURIComponent(user.id),
-          {
-            method:"PATCH",
-            headers:{
-              "Content-Type":"application/json",
-              apikey: secret,
-              Authorization: "Bearer " + secret,
-              Prefer:"return=minimal"
-            },
-            body: JSON.stringify({
-              voice_seconds_used: total,
-              updated_at: new Date().toISOString()
-            })
-          }
-        );
-
-        if(!r.ok){
-          throw new Error(await r.text());
-        }
+        entitlement =
+          await patchEntitlement(
+            secret,
+            user.id,
+            {
+              voice_seconds_used:
+                Number(
+                  entitlement.voice_seconds_used || 0
+                ) + seconds
+            }
+          );
       }
+
+      return res.status(200).json(
+        accessPayload(entitlement)
+      );
     }
 
-    const pro = isPro(entitlement);
-    const trialUsed =
-      Boolean(entitlement.voice_trial_started_at) ||
-      Number(entitlement.voice_trial_seconds || 0) >= 60;
-
-    const cookieValue =
-      user.id + "." + sign(user.id, secret);
-
-    res.setHeader(
-      "Set-Cookie",
-      `${COOKIE}=${cookieValue}; Path=/; Max-Age=3600; HttpOnly; Secure; SameSite=Lax`
+    return res.status(200).json(
+      accessPayload(entitlement)
     );
-
-    return res.status(200).json({
-      plan: pro ? "pro" : "free",
-      voice_enabled: pro || !trialUsed,
-      trial_available: !pro && !trialUsed,
-      trial_seconds: !pro && !trialUsed ? 60 : 0,
-      voice_seconds_used:
-        Number(entitlement.voice_seconds_used || 0),
-      pro_expires_at:
-        entitlement.pro_expires_at || null
-    });
 
   }catch(error){
     console.error("Voice access error:", error);
