@@ -765,6 +765,10 @@ function updatePortalUI() {
     el.hidden = !loggedIn;
   });
 
+  document.querySelectorAll(".auth-voice-link").forEach((el) => {
+    el.hidden = !loggedIn;
+  });
+
   document.querySelectorAll(".auth-ai-entry").forEach((el) => {
     el.href = loggedIn ? "index.html#assistant" : "login.html";
     el.textContent = loggedIn
