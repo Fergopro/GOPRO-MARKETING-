@@ -1,425 +1,177 @@
-import React,{useEffect,useMemo,useRef,useState} from "https://esm.sh/react@19?bundle";
-import{createRoot}from"https://esm.sh/react-dom@19/client?deps=react@19&bundle";
-import{experimental_useRealtime as useRealtime}from"https://esm.sh/@ai-sdk/react@latest?deps=react@19&bundle";
-import{gateway}from"https://esm.sh/@ai-sdk/gateway@latest?bundle";
-import{createClient}from"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+/* GoProcures Voice AI – no external React runtime required. */
+(() => {
+  "use strict";
+  const SUPABASE_URL = "https://oulckllygepbqbctzeka.supabase.co";
+  const PUBLISHABLE_KEY = "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI";
+  const $ = id => document.getElementById(id);
+  const status = $("voiceStatus"), errBox = $("voiceError"), info = $("voiceInfo");
+  const startBtn = $("startVoice"), stopBtn = $("stopVoice"), retryBtn = $("retryVoice");
+  const stage = $("voiceStage"), timer = $("voiceTimer");
+  const transcript = $("voiceTranscript");
+  let client, session, access, peer, channel, microphone, remoteAudio;
+  let startedAt = 0, countdown = null, connecting = false, finishedTrial = false;
 
-const h=React.createElement;
-const supabase=createClient(
-  "https://oulckllygepbqbctzeka.supabase.co",
-  "sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI"
-);
-
-function textFromMessage(message){
-  if(typeof message?.content==="string"){
-    return message.content;
+  function setStatus(s) { status.textContent = s; }
+  function error(s) { errBox.textContent = s; errBox.hidden = false; }
+  function clearError() { errBox.hidden = true; errBox.textContent = ""; }
+  async function jsonRequest(path, body, authorized = true) {
+    const headers = { "Content-Type":"application/json" };
+    if (authorized) {
+      if (!session?.access_token) throw new Error("Please sign in again.");
+      headers.Authorization = "Bearer " + session.access_token;
+    }
+    const response = await fetch(path, {method:"POST", headers, body:JSON.stringify(body||{})});
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Voice service is temporarily unavailable.");
+    return data;
   }
-
-  const parts=Array.isArray(message?.parts)?message.parts:[];
-
-  return parts
-    .map(part=>{
-      if(typeof part?.text==="string") return part.text;
-      if(typeof part?.transcript==="string") return part.transcript;
-      return "";
-    })
-    .filter(Boolean)
-    .join(" ");
-}
-
-function App(){
-  const [authSession,setAuthSession]=useState(null);
-  const [access,setAccess]=useState(null);
-  const [loading,setLoading]=useState(true);
-  const [starting,setStarting]=useState(false);
-  const [secondsLeft,setSecondsLeft]=useState(null);
-  const [error,setError]=useState("");
-  const startedAtRef=useRef(null);
-  const usageSentRef=useRef(false);
-  const streamRef=useRef(null);
-
-  const model=useMemo(
-    ()=>gateway.experimental_realtime("openai/gpt-realtime-2"),
-    []
-  );
-
-  const realtime=useRealtime({
-    model,
-    api:{token:"/api/realtime-token"},
-    sessionConfig:{
-      voice:"marin",
-      turnDetection:{type:"server-vad"},
-      instructions:
-        "You are GoProcures Voice AI, a concise professional worldwide procurement assistant. " +
-        "Ask only the important questions needed to understand the item, quantity, specification, application, acceptable alternatives, delivery location and urgency. " +
-        "Do not invent suppliers, prices, stock, certifications or delivery dates. " +
-        "When the requirement is clear, summarize it briefly and ask the customer to confirm. " +
-        "Speak naturally, warmly and professionally."
-    },
-    onError:(err)=>{
-      console.error(err);
-      setError(err?.message||"Voice AI connection error.");
-    }
-  });
-
-  useEffect(()=>{
-    let alive=true;
-
-    (async()=>{
-      const {data:{session}}=await supabase.auth.getSession();
-
-      if(!alive) return;
-
-      if(!session){
-        location.replace("login.html");
-        return;
-      }
-
-      setAuthSession(session);
-
-      try{
-        const r=await fetch("/api/voice-access",{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json",
-            Authorization:"Bearer "+session.access_token
-          },
-          body:JSON.stringify({action:"status"})
-        });
-
-        const j=await r.json();
-
-        if(!r.ok){
-          throw new Error(j.error||"Unable to check voice access.");
-        }
-
-        if(alive){
-          setAccess(j);
-        }
-      }catch(e){
-        if(alive) setError(e.message);
-      }finally{
-        if(alive) setLoading(false);
-      }
-    })();
-
-    return()=>{alive=false};
-  },[]);
-
-  useEffect(()=>{
-    if(realtime.status!=="connected"||!startedAtRef.current){
-      return;
-    }
-
-    const timer=setInterval(()=>{
-      if(access?.plan!=="pro"){
-        const elapsed=Math.floor(
-          (Date.now()-startedAtRef.current)/1000
-        );
-
-        const left=Math.max(0,60-elapsed);
-        setSecondsLeft(left);
-
-        if(left<=0){
-          endVoice();
-        }
-      }
-    },250);
-
-    return()=>clearInterval(timer);
-  },[realtime.status,access?.plan]);
-
-  async function reportUsage(){
-    if(
-      usageSentRef.current||
-      !authSession||
-      !startedAtRef.current
-    ){
-      return;
-    }
-
-    usageSentRef.current=true;
-
-    const seconds=Math.max(
-      1,
-      Math.round(
-        (Date.now()-startedAtRef.current)/1000
-      )
-    );
-
-    try{
-      await fetch("/api/voice-access",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:
-            "Bearer "+authSession.access_token
-        },
-        body:JSON.stringify({
-          action:"usage",
-          seconds
-        })
-      });
-    }catch(e){
-      console.error(e);
+  function showAccess() {
+    const pro = access?.plan === "pro";
+    const free = !!access?.trial_available;
+    $("voicePlan").textContent = pro ? "GoProcures Pro" : free ? "Free 60-second trial available" : "Free trial used";
+    $("voiceBadge").textContent = pro ? "PRO" : "VOICE AI";
+    $("voiceAccessExplanation").textContent = pro
+      ? "Your Pro account is enabled for realtime Voice AI."
+      : free ? "You have one free 60-second Voice AI trial. Pro is required after your trial."
+      : "Your trial has been used. Upgrade to GoProcures Pro to use voice again.";
+    startBtn.disabled = !access?.voice_enabled;
+    if (access?.voice_enabled) setStatus("Ready when you are");
+    else setStatus("Voice AI requires GoProcures Pro");
+  }
+  async function checkAccess() {
+    try {
+      clearError();
+      if (!window.isSecureContext) throw new Error("Voice AI requires HTTPS.");
+      const module = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+      client = module.createClient(SUPABASE_URL, PUBLISHABLE_KEY);
+      const result = await client.auth.getSession();
+      session = result.data?.session;
+      if (!session) { window.location.replace("login.html"); return; }
+      access = await jsonRequest("/api/voice-access", {action:"status"});
+      showAccess();
+    } catch (e) {
+      setStatus("Voice AI could not start");
+      error(e.message || "Unable to load your account.");
+      retryBtn.hidden = false;
     }
   }
-
-  async function startVoice(){
-    if(starting||realtime.status==="connected"){
-      return;
-    }
-
-    setStarting(true);
-    setError("");
-    usageSentRef.current=false;
-
-    try{
-      const r=await fetch("/api/voice-access",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:
-            "Bearer "+authSession.access_token
-        },
-        body:JSON.stringify({action:"start"})
-      });
-
-      const j=await r.json();
-
-      if(!r.ok){
-        if(j.upgrade_required){
-          setAccess(prev=>({
-            ...(prev||{}),
-            voice_enabled:false,
-            trial_available:false,
-            plan:"free"
-          }));
-        }
-
-        throw new Error(
-          j.error||
-          "Voice AI is not available."
-        );
-      }
-
-      setAccess(j);
-
-      const stream=
-        await navigator.mediaDevices.getUserMedia({
-          audio:{
-            echoCancellation:true,
-            noiseSuppression:true,
-            autoGainControl:true
-          }
-        });
-
-      streamRef.current=stream;
-      startedAtRef.current=Date.now();
-
-      if(j.session_type==="trial"){
-        setSecondsLeft(60);
-      }else{
-        setSecondsLeft(null);
-      }
-
-      await realtime.connect({stream});
-
-      try{
-        await realtime.resumePlayback();
-      }catch{}
-
-    }catch(e){
-      startedAtRef.current=null;
-      setError(e.message);
-    }finally{
-      setStarting(false);
+  function recordText(role, text) {
+    if (!text) return;
+    if (transcript.querySelector(".voice-card")) transcript.replaceChildren();
+    const el = document.createElement("div");
+    el.className = "voice-msg " + (role === "assistant" ? "assistant" : "user");
+    const label = document.createElement("b");
+    label.textContent = role === "assistant" ? "GOPROCURES AI" : "YOU";
+    const content = document.createElement("div");
+    content.textContent = text;
+    el.append(label, content);
+    transcript.append(el);
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+  function onRealtimeEvent(raw) {
+    let msg; try { msg = JSON.parse(raw); } catch { return; }
+    if (msg.type === "conversation.item.input_audio_transcription.completed") {
+      recordText("user", msg.transcript);
+    } else if (msg.type === "response.audio_transcript.done" || msg.type === "response.output_audio_transcript.done") {
+      recordText("assistant", msg.transcript);
+    } else if (msg.type === "error") {
+      error(msg.error?.message || "Voice connection error.");
     }
   }
-
-  async function endVoice(){
-    try{
-      if(
-        realtime.status==="connected"||
-        realtime.status==="connecting"
-      ){
-        await realtime.close();
-      }
-    }catch{
-      realtime.disconnect();
-    }
-
-    if(streamRef.current){
-      streamRef.current
-        .getTracks()
-        .forEach(track=>track.stop());
-      streamRef.current=null;
-    }
-
-    await reportUsage();
-
-    startedAtRef.current=null;
-
-    if(access?.plan!=="pro"){
-      setSecondsLeft(0);
-      setAccess(prev=>({
-        ...(prev||{}),
-        voice_enabled:false,
-        trial_available:false
-      }));
-    }
-  }
-
-  useEffect(()=>{
-    return()=>{
-      if(streamRef.current){
-        streamRef.current
-          .getTracks()
-          .forEach(track=>track.stop());
+  async function openConnection(credentials) {
+    if (!credentials?.url || !credentials?.token) throw new Error("Voice token unavailable.");
+    if (!window.RTCPeerConnection) throw new Error("Your browser does not support live voice.");
+    peer = new RTCPeerConnection();
+    remoteAudio = document.createElement("audio");
+    remoteAudio.autoplay = true;
+    remoteAudio.playsInline = true;
+    remoteAudio.hidden = true;
+    document.body.appendChild(remoteAudio);
+    peer.ontrack = event => { remoteAudio.srcObject = event.streams[0]; remoteAudio.play().catch(() => {}); };
+    peer.onconnectionstatechange = () => {
+      if (["failed","disconnected"].includes(peer?.connectionState)) {
+        error("Voice connection dropped. Please check your network and try again.");
+        stop();
       }
     };
-  },[]);
-
-  if(loading){
-    return h("div",{className:"voice-loading"},
-      h("div",{className:"voice-loader"}),
-      h("p",null,"Checking Voice AI access...")
-    );
+    microphone.getAudioTracks().forEach(track => peer.addTrack(track, microphone));
+    channel = peer.createDataChannel("oai-events");
+    channel.onmessage = event => onRealtimeEvent(event.data);
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    const answer = await fetch(credentials.url, {
+      method: "POST",
+      headers: {"Authorization":"Bearer " + credentials.token, "Content-Type":"application/sdp"},
+      body: offer.sdp
+    });
+    if (!answer.ok) throw new Error("Realtime voice connection failed (" + answer.status + ").");
+    await peer.setRemoteDescription({type:"answer",sdp:await answer.text()});
+    channel.onopen = () => {
+      channel.send(JSON.stringify({type:"session.update",session:{
+        instructions:"You are GoProcures Voice AI, a professional worldwide procurement assistant. Ask succinct questions to clarify item, quantity, specification, delivery destination and urgency. Do not invent supplier offers or claim to have sourced anything. Summarize the client's requirements before asking for confirmation.",
+        voice:"marin",
+        turn_detection:{type:"server_vad"}
+      }}));
+    };
   }
-
-  const connected=realtime.status==="connected";
-  const connecting=
-    realtime.status==="connecting"||starting;
-  const locked=
-    access?.plan!=="pro"&&!access?.voice_enabled;
-
-  const transcript=(realtime.messages||[])
-    .map(m=>({
-      role:m.role,
-      text:textFromMessage(m)
-    }))
-    .filter(m=>m.text);
-
-  return h("div",{className:"voice-page"},
-    h("nav",{className:"voice-nav"},
-      h("a",{className:"voice-brand",href:"index.html"},
-        h("span",{className:"voice-brand-mark"},"GP"),
-        h("span",null,"Go",h("em",null,"Procures"))
-      ),
-      h("div",{className:"voice-nav-actions"},
-        h("a",{className:"voice-link",href:"index.html#assistant"},"Text AI"),
-        h("a",{className:"voice-link",href:"dashboard.html"},"Dashboard")
-      )
-    ),
-
-    h("div",{className:"voice-layout"},
-      h("section",{className:"voice-main"},
-        h("div",{className:"voice-eyebrow"},"REALTIME PROCUREMENT ASSISTANT"),
-        h("h1",{className:"voice-title"},"Talk. ",h("span",null,"We understand the requirement.")),
-        h("p",{className:"voice-sub"},
-          "Speak naturally about what you need. GoProcures Voice AI will ask the procurement questions that matter and help turn the conversation into a clear sourcing requirement."
-        ),
-
-        h("div",{className:"voice-stage "+(connected?"connected":"")},
-          h("div",{className:"voice-orb-wrap"},
-            h("div",{className:"voice-ring r1"}),
-            h("div",{className:"voice-ring r2"}),
-            h("div",{className:"voice-ring r3"}),
-            h("div",{className:"voice-orb"},"AI")
-          ),
-          h("div",{className:"voice-status"},
-            connected
-              ? h(React.Fragment,null,h("strong",null,"Listening")," · Speak naturally")
-              : connecting
-                ? "Connecting secure voice session..."
-                : locked
-                  ? "Voice AI requires GoProcures Pro"
-                  : "Ready when you are"
-          ),
-          access?.plan!=="pro"&&secondsLeft!==null
-            ? h("div",{className:"voice-timer"},
-                "0:"+String(secondsLeft).padStart(2,"0")
-              )
-            : null,
-          h("div",{className:"voice-controls"},
-            !connected
-              ? h("button",{
-                  className:"voice-btn primary",
-                  disabled:connecting||locked||!access?.voice_enabled,
-                  onClick:startVoice
-                },connecting?"Connecting...":"🎙 Start Voice AI")
-              : h("button",{
-                  className:"voice-btn stop",
-                  onClick:endVoice
-                },"End conversation")
-          ),
-          error
-            ? h("div",{className:"voice-alert"},error)
-            : null,
-          locked
-            ? h("div",{className:"voice-alert"},
-                "Your free 1-minute Voice AI trial has been used. Upgrade to Pro to continue using realtime voice."
-              )
-            : null
-        )
-      ),
-
-      h("aside",{className:"voice-side"},
-        h("div",{className:"voice-plan"},
-          h("div",null,
-            h("span",null,"Voice access"),
-            h("strong",null,
-              access?.plan==="pro"
-                ? "GoProcures Pro"
-                : access?.trial_available
-                  ? "Free trial available"
-                  : "Free trial used"
-            )
-          ),
-          h("div",{className:"voice-plan-badge"},
-            access?.plan==="pro"?"PRO":"VOICE AI"
-          )
-        ),
-
-        h("div",{className:"voice-card"},
-          h("h3",null,"How access works"),
-          h("p",null,
-            access?.plan==="pro"
-              ? "Your Pro account has realtime Voice AI enabled."
-              : access?.trial_available
-                ? "Your account includes one free 60-second Voice AI session. Once it starts, the trial is considered used."
-                : "Realtime Voice AI is now locked on this free account. Pro access is required for more voice sessions."
-          )
-        ),
-
-        h("div",{className:"voice-card"},
-          h("h3",null,"Live conversation"),
-          h("p",null,
-            connected
-              ? "Microphone and AI audio are active. You can interrupt naturally while the assistant is speaking."
-              : "Your microphone only activates after you press Start Voice AI."
-          )
-        ),
-
-        h("div",{className:"voice-transcript"},
-          transcript.length
-            ? transcript.map((m,i)=>
-                h("div",{
-                  key:i,
-                  className:"voice-msg "+(m.role==="assistant"?"assistant":"user")
-                },
-                  h("b",null,m.role==="assistant"?"GOPROCURES AI":"YOU"),
-                  m.text
-                )
-              )
-            : h("div",{className:"voice-card"},
-                h("h3",null,"Transcript"),
-                h("p",null,"Your realtime conversation will appear here when transcription is available.")
-              )
-        )
-      )
-    )
-  );
-}
-
-createRoot(document.getElementById("voiceRoot")).render(h(App));
+  async function start() {
+    if (connecting || !access?.voice_enabled) return;
+    connecting = true; startBtn.disabled = true; retryBtn.hidden = true;
+    clearError(); setStatus("Requesting microphone permission...");
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("Microphone access requires HTTPS and a supported browser.");
+      microphone = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      setStatus("Connecting securely...");
+      // The trial is not claimed until after microphone permission is granted.
+      const rights = await jsonRequest("/api/voice-access", {action:"start"});
+      if (rights.session_type === "trial") finishedTrial = true;
+      const token = await jsonRequest("/api/realtime-token", {}, false);
+      await openConnection(token);
+      startedAt = Date.now();
+      stage.classList.add("connected");
+      startBtn.hidden = true; stopBtn.hidden = false;
+      setStatus("Listening — tell us what you need");
+      info.textContent = "Microphone is active. Click End conversation to stop.";
+      if (rights.session_type === "trial") {
+        timer.hidden = false;
+        const tick = () => {
+          const remaining = Math.max(0, 60 - Math.floor((Date.now()-startedAt)/1000));
+          timer.textContent = "0:" + String(remaining).padStart(2,"0");
+          if (!remaining) stop();
+        };
+        tick(); countdown = setInterval(tick, 250);
+      }
+    } catch(e) {
+      error(e.message || "Unable to connect to Voice AI.");
+      setStatus("Voice AI connection failed");
+      await stop(false);
+      retryBtn.hidden = false;
+    } finally { connecting = false; }
+  }
+  async function stop(refresh=true) {
+    if (countdown) { clearInterval(countdown); countdown = null; }
+    try { channel?.close(); } catch {}
+    try { peer?.close(); } catch {}
+    peer = null; channel = null;
+    microphone?.getTracks().forEach(track => track.stop()); microphone = null;
+    if(remoteAudio) {remoteAudio.srcObject = null; remoteAudio.remove();remoteAudio=null;}
+    stage.classList.remove("connected"); stopBtn.hidden = true; startBtn.hidden = false;
+    if (startedAt && session) {
+      const seconds = Math.max(1,Math.round((Date.now()-startedAt)/1000));
+      startedAt = 0;
+      jsonRequest("/api/voice-access", {action:"usage",seconds}).catch(console.error);
+    }
+    if (refresh) {
+      try { access = await jsonRequest("/api/voice-access",{action:"status"}); showAccess(); }
+      catch(e) {error(e.message);}
+    } else startBtn.disabled = !access?.voice_enabled;
+  }
+  startBtn.addEventListener("click", start);
+  stopBtn.addEventListener("click", () => stop());
+  retryBtn.addEventListener("click", async () => {retryBtn.hidden=true;clearError();await checkAccess();});
+  window.addEventListener("pagehide", () => {
+    microphone?.getTracks().forEach(track=>track.stop());
+    peer?.close();
+  });
+  checkAccess();
+})();
