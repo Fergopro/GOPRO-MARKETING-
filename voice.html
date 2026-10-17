@@ -2,19 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#05070b">
-  <title>GoProcures Voice AI</title>
+  <meta name="description" content="GoProcures secure voice procurement assistant. Talk to AI, clarify your requirements, and stay in control of procurement.">
+  <title>GoProcures Voice AI | Worldwide Procurement</title>
   <link rel="stylesheet" href="assets/voice.css">
 </head>
 <body>
-  <main id="voiceRoot">
-    <div class="voice-loading">
-      <div class="voice-loader"></div>
-      <p>Preparing GoProcures Voice AI...</p>
-    </div>
-  </main>
+  <main class="voice-page" id="voiceRoot">
+    <nav class="voice-nav" aria-label="Voice AI navigation">
+      <a class="voice-brand" href="index.html">
+        <span class="voice-brand-mark">GP</span>
+        <span>Go<em>Procures</em></span>
+      </a>
+      <div class="voice-nav-actions">
+        <a class="voice-link" href="index.html#assistant">Text AI</a>
+        <a class="voice-link" href="dashboard.html">Dashboard</a>
+      </div>
+    </nav>
+    <div class="voice-layout">
+      <section class="voice-main">
+        <div class="voice-eyebrow">GOPROCURES · WORLDWIDE PROCUREMENT AI</div>
+        <h1 class="voice-title">Tell us. <span>We'll understand.</span></h1>
+        <p class="voice-sub">Talk naturally about what you want to procure. Our AI assistant will clarify the specification, quantity, delivery destination and other essential details.</p>
+        <div class="voice-stage" id="voiceStage">
+          <div class="voice-orb-wrap" aria-hidden="true">
+            <div class="voice-ring r1"></div>
+            <div class="voice-ring r2"></div>
+            <div class="voice-ring r3"></div>
+            <div class="voice-orb">AI</div>
+          </div>
+          <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><strong>Checking your account...</strong></div>
+          <div class="voice-timer" id="voiceTimer" hidden>1:00</div>
+          <div class="voice-controls">
+            <button class="voice-btn primary" type="button" id="startVoice" disabled>🎙 Start Voice AI</button>
+            <button class="voice-btn stop" type="button" id="stopVoice" hidden>End conversation</button>
+            <button class="voice-btn" type="button" id="retryVoice" hidden>Try again</button>
+          </div>
+          <div class="voice-alert" id="voiceError" role="alert" hidden></div>
+          <div class="voice-alert voice-ok" id="voiceInfo">Voice AI starts only when you choose to connect. Your microphone stays off until then.</div>
+        </div>
+      </section>
 
-  <script type="module" src="assets/voice.js"></script>
+      <aside class="voice-side">
+        <div class="voice-plan">
+          <div><span>Voice access</span><strong id="voicePlan">Checking account...</strong></div>
+          <div class="voice-plan-badge" id="voiceBadge">AI VOICE</div>
+        </div>
+        <div class="voice-card">
+          <h3>How voice access works</h3>
+          <p id="voiceAccessExplanation">Each signed-in customer has one free 60-second voice trial. Further voice sessions require Pro access.</p>
+        </div>
+        <div class="voice-card">
+          <h3>Live conversation</h3>
+          <p id="voiceCaptureExplanation">You can speak naturally and interrupt the AI while it is replying. Allow microphone access when prompted.</p>
+        </div>
+        <div class="voice-transcript" id="voiceTranscript" aria-live="polite">
+          <div class="voice-card">
+            <h3>Conversation</h3>
+            <p>The conversation transcript will appear here when available.</p>
+          </div>
+        </div>
+        <p class="voice-fineprint">AI responses may contain errors. Supplier prices, specifications and availability must be verified before ordering.</p>
+      </aside>
+    </div>
+    <div id="voiceEngineRoot" hidden></div>
+  </main>
+  <script src="assets/voice.js" defer></script>
 </body>
 </html>
