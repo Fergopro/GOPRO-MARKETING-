@@ -162,6 +162,7 @@
   function eventFromGatewayObject(event) {
     switch(event?.type) {
       case "session-created":
+      case "session-updated":
       case "session-started":
         setStatus("Listening — what can we procure for you?");
         break;
@@ -189,7 +190,8 @@
         message("user", event.transcript);
         break;
       case "error":
-        showError(event.message || "AI voice session error.");
+        showError(event.message || event.error?.message || "AI voice session error.");
+        setStatus("Voice configuration failed — please end the session.");
         break;
       case "session-closed":
         stop();
@@ -268,10 +270,21 @@
     });
     ws.onmessage = e => eventFromGateway(e.data);
     ws.send(JSON.stringify({type:"session-update",config:{
-      voice:"onyx",
-      instructions:"You are GoProcures Voice AI, a confident, professional worldwide procurement specialist speaking with a low, warm voice. Ask concise questions about item, specification, quantity, destination and lead time. Never invent suppliers, pricing or stock availability. Summarize the requirement for confirmation.",
-      inputAudioFormat:{type:"pcm16",sampleRate:24000},
-      outputAudioFormat:{type:"pcm16",sampleRate:24000},
+      voice:"cedar",
+      instructions:[
+        "You are GoProcures, a premium worldwide AI procurement concierge. Your job is to hold a natural two-way SPOKEN conversation with the customer and understand what they want sourced.",
+        "Speak in clear, fluent, professional English with a warm low-pitched male voice. Follow the user's preferred language when it is clear. Be calm, intelligent, direct and concise, never robotic.",
+        "Start by introducing yourself briefly: Hi, I'm GoProcures. What can I source for you today?",
+        "Listen carefully and remember details the customer has already told you. Answer their actual question before asking another one. If you did not hear a word clearly, say so and ask them to repeat only that detail.",
+        "Ask one pertinent follow-up at a time, prioritizing the exact product, specs or model, quantity, delivery destination, timing, and relevant quality requirements. Do not interrogate the customer or repeat information.",
+        "You can help source any lawful type of goods worldwide. Explain how GoProcures can research suppliers, obtain and compare quotations, vet suppliers, and coordinate logistics, subject to human review.",
+        "Never pretend you have contacted a supplier, obtained a quotation, checked live stock, placed an order, or completed any action unless the connected platform has actually done so.",
+        "Do not reveal confidential supplier names or invent company details. If the request is sufficiently clear, recap the procurement brief naturally and ask permission to send it for sourcing.",
+        "When the user interrupts, listen and respond to the new direction; do not continue the old script. Prefer short conversational sentences rather than long lists.",
+        "Voice conversations are an intake and clarification experience; never promise an RFQ has been saved or sent automatically."
+      ].join(" "),
+      inputAudioFormat:{type:"audio/pcm",sampleRate:24000},
+      outputAudioFormat:{type:"audio/pcm",sampleRate:24000},
       outputModalities:["audio"],
       turnDetection:{type:"server-vad"},
       inputAudioTranscription:{model:"gpt-4o-mini-transcribe"}
