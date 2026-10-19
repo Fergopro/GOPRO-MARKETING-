@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { gateway } from "@ai-sdk/gateway";
+
 
 const U = "https://oulckllygepbqbctzeka.supabase.co";
 const COOKIE = "gp_voice_session";
@@ -168,6 +168,7 @@ export default async function handler(req, res){
       gatewayKeyPresent: Boolean(process.env.AI_GATEWAY_API_KEY)
     });
 
+    const { gateway } = await import("@ai-sdk/gateway");
     const { token, url } =
       await gateway.experimental_realtime.getToken({
         model:"openai/gpt-realtime-2",
