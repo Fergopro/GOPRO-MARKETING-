@@ -153,11 +153,30 @@ export default async function handler(req, res){
       expiresAfterSeconds = 75;
     }
 
+    if (!process.env.AI_GATEWAY_API_KEY &&
+        !process.env.VERCEL_OIDC_TOKEN) {
+      console.error("Voice realtime: AI Gateway credential not detected");
+      return res.status(503).json({
+        error: "AI Gateway credentials are not configured for this Preview deployment.",
+        code: "GATEWAY_CREDENTIAL_MISSING"
+      });
+    }
+
+    console.info("Voice realtime: requesting short-lived Gateway token", {
+      isPro: pro,
+      expiresAfterSeconds,
+      gatewayKeyPresent: Boolean(process.env.AI_GATEWAY_API_KEY)
+    });
+
     const { token, url } =
       await gateway.experimental_realtime.getToken({
         model:"openai/gpt-realtime-2",
         expiresAfterSeconds
       });
+
+    if (!token || !url) {
+      throw new Error("Gateway did not return a token and WebSocket URL");
+    }
 
     return res.status(200).json({
       token,
@@ -166,10 +185,26 @@ export default async function handler(req, res){
     });
 
   }catch(error){
-    console.error("Realtime token error:", error);
+    const message = String(error?.message || "");
+    const status = error?.statusCode || error?.status || error?.response?.status || null;
+    const code = error?.code || error?.name || "GATEWAY_TOKEN_FAILURE";
+    console.error("Realtime token mint failed:", {
+      code,
+      status,
+      message,
+      cause: error?.cause?.message || undefined
+    });
 
-    return res.status(500).json({
-      error:"Unable to start GoProcures Voice AI."
+    const description = status === 401 || status === 403
+      ? "AI Gateway rejected the configured credentials or model access."
+      : status === 402 || status === 429
+        ? "AI Gateway billing, quota, or rate-limit blocked the voice session."
+        : "Voice token creation failed on the server. Open Vercel Function Logs for api/realtime-token.";
+
+    return res.status(502).json({
+      error: description,
+      code: String(code).slice(0,80),
+      gateway_status: status
     });
   }
 }
