@@ -127,7 +127,7 @@ export default async function handler(req, res){
 
     const pro = isPro(row);
 
-    let expiresAfterSeconds = 600;
+    let expiresAfterSeconds = 300;
 
     if(!pro){
       const started = row.voice_trial_started_at
