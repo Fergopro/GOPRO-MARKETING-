@@ -27,6 +27,7 @@
     if(playing&&outputAnalyser){const samples=new Float32Array(outputAnalyser.fftSize);outputAnalyser.getFloatTimeDomainData(samples);level=Math.sqrt(samples.reduce((s,v)=>s+v*v,0)/samples.length);}
     if(!connected)level=0;
     const strength=Math.min(1,level*8);ui.stage.style.setProperty('--audio-level',String(reduced.matches?0:strength));
+    window.dispatchEvent(new CustomEvent('goprocures:voice-visual',{detail:{level:strength,state:ui.error.hidden?ui.stage.dataset.state:'error',connected}}));
     visual.clearRect(0,0,canvas.width,canvas.height);
     for(let i=0;i<25;i++){const amplitude=reduced.matches?2:2+strength*(8+Math.abs(Math.sin(i*1.3))*30);visual.fillStyle=i%3===0?'#48baff':'#803aff';visual.beginPath();visual.roundRect(20+i*21,(46-amplitude)/2,6,amplitude,3);visual.fill();}
     visualFrame=requestAnimationFrame(animateAudio);

@@ -7,7 +7,7 @@
   <meta name="description" content="GoProcures secure voice procurement assistant. Talk to AI, clarify your requirements, and stay in control of procurement.">
   <title>GoProcures Voice AI | Worldwide Procurement</title>
   <link rel="stylesheet" href="assets/voice.css">
-</head>
+<link rel="stylesheet" href="assets/orb-runtime.css"><link rel="stylesheet" href="assets/atmosphere.css"></head>
 <body>
   <main class="voice-page" id="voiceRoot">
     <nav class="voice-nav" aria-label="Voice AI navigation">
@@ -26,12 +26,7 @@
         <h1 class="voice-title">Tell us. <span>We'll understand.</span></h1>
         <p class="voice-sub">Talk naturally about what you want to procure. Our AI assistant will clarify the specification, quantity, delivery destination and other essential details.</p>
         <div class="voice-stage" id="voiceStage">
-          <div class="voice-orb-wrap" aria-hidden="true">
-            <div class="voice-ring r1"></div>
-            <div class="voice-ring r2"></div>
-            <div class="voice-ring r3"></div>
-            <div class="voice-orb"></div>
-          </div>
+          <div class="voice-orb-wrap" aria-hidden="true"><div class="orb-orbit orbit-one"></div><div class="orb-orbit orbit-two"></div><div class="orb-spark spark-one"></div><div class="orb-spark spark-two"></div><div class="orb-motion orb-no-webgl" id="procurementOrb"><div class="orb-shell"><div class="orb-clip"><canvas class="orb-canvas" id="liveOrb" aria-label="Voice activity"></canvas><div class="orb-fallback" aria-hidden="true"></div></div><div class="orb-chrome" aria-hidden="true"></div></div></div></div>
           <canvas class="voice-wave" id="voiceWave" width="550" height="46" aria-hidden="true"></canvas><div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><strong>Checking your account...</strong></div>
           <div class="voice-timer" id="voiceTimer" hidden>1:00</div>
           <div class="voice-controls">
@@ -69,5 +64,5 @@
     <div id="voiceEngineRoot" hidden></div>
   </main>
   <script src="assets/voice.js" defer></script>
-</body>
+<script type="module" src="assets/atmosphere.js"></script></body>
 </html>
