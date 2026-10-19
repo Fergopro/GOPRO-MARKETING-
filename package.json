@@ -5,5 +5,8 @@
   "dependencies": {
     "@ai-sdk/gateway": "latest",
     "ai": "latest"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
   }
 }

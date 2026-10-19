@@ -18,8 +18,30 @@
   let playedAudioCtx, outputTime = 0, outputSources = new Set();
   let timerInterval = null, startedAt = 0, starting = false, connected = false;
   let sessionIsTrial = false, usageReported = true, assistantTranscript = "";
+  let requestStore=null, conversation=[], muted=false, visualFrame=0, micLevel=0, outputAnalyser=null, saveQueue=Promise.resolve();
+  const canvas=$("voiceWave"), visual=canvas?.getContext("2d"), reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  function state(value){ui.stage.dataset.state=value;}
+  function animateAudio(){
+    if(!visual)return;let level=micLevel;
+    const playing=outputSources.size>0;
+    if(playing&&outputAnalyser){const samples=new Float32Array(outputAnalyser.fftSize);outputAnalyser.getFloatTimeDomainData(samples);level=Math.sqrt(samples.reduce((s,v)=>s+v*v,0)/samples.length);}
+    if(!connected)level=0;
+    const strength=Math.min(1,level*8);ui.stage.style.setProperty('--audio-level',String(reduced.matches?0:strength));
+    visual.clearRect(0,0,canvas.width,canvas.height);
+    for(let i=0;i<25;i++){const amplitude=reduced.matches?2:2+strength*(8+Math.abs(Math.sin(i*1.3))*30);visual.fillStyle=i%3===0?'#48baff':'#803aff';visual.beginPath();visual.roundRect(20+i*21,(46-amplitude)/2,6,amplitude,3);visual.fill();}
+    visualFrame=requestAnimationFrame(animateAudio);
+  }
+  function saveNotice(text,error=false){const n=$("voiceSaveStatus");if(n){n.textContent=text;n.dataset.error=String(error);}}
+  function persist(confirmed=false){
+    const snapshot=conversation.map(m=>({...m}));const owner=session?.user;
+    const task=async()=>{if(!snapshot.some(m=>m.role==='user'))return;if(!owner||session?.user?.id!==owner.id)throw new Error('Sign in to the original account to save this conversation.'); if(!requestStore){const {ProcurementRequestStore}=await import('./request-store.js');requestStore=new ProcurementRequestStore(client,owner,'voice');}const id=await requestStore.save(snapshot,{confirmed});saveNotice(confirmed?'Voice request confirmed and saved in your dashboard.':'Voice conversation saved in your dashboard. Confirm when the brief is ready.');return id;};
+    const result=saveQueue.then(task);saveQueue=result.catch(()=>{});return result;
+  }
 
-  function setStatus(message) { ui.status.textContent = message; }
+
+  function setStatus(message) { ui.status.textContent = message;
+    state(message.startsWith('Listening')?'listening':message.includes('speaking')?'speaking':message.includes('Processing')?'processing':connected?'processing':'idle');
+  }
   function showError(message) {
     ui.error.textContent = String(message || "Voice AI unavailable.");
     ui.error.hidden = false;
@@ -96,12 +118,13 @@
     setStatus("Checking account access...");
     try {
       if (!window.isSecureContext) throw new Error("Voice AI requires a secure HTTPS connection.");
-      const pkg = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
-      client = pkg.createClient(URL, KEY);
+      const pkg = await import("./supabase-client.js");
+      client = await pkg.getProcurementClient();
       const found = await client.auth.getSession();
       session = found.data?.session;
-      if (!session) { location.replace("login.html"); return; }
+      if (!session) {if(document.querySelector('.assistant-console')){setStatus('Sign in to start your free voice trial');ui.plan.textContent='Sign in required';ui.start.disabled=false;ui.start.textContent='Sign in to use Voice AI →';return;}location.replace('login.html');return;}
       await refreshAccess();
+      client.auth.onAuthStateChange((_event,next)=>{if(session?.user?.id!==next?.user?.id){void stop(false);requestStore=null;conversation=[];ui.transcript.replaceChildren();}session=next;});
     } catch (error) {
       setStatus("Unable to check Voice AI access");
       showError(detail(error));
@@ -112,6 +135,9 @@
 
   function message(role, text) {
     if (!text) return;
+    conversation.push({role,content:text});
+    const confirm=$("confirmVoiceRequest");if(confirm)confirm.disabled=!conversation.some(m=>m.role==='user');
+    void persist().catch(e=>saveNotice('Voice transcript not saved: '+detail(e)+' Use Confirm & submit to retry.',true));
     if (ui.transcript.querySelector(".voice-card")) ui.transcript.replaceChildren();
     const card = document.createElement("div");
     card.className = "voice-msg " + (role === "assistant" ? "assistant" : "user");
@@ -144,12 +170,12 @@
     buffer.getChannelData(0).set(pcm);
     const node = playedAudioCtx.createBufferSource();
     node.buffer = buffer;
-    node.connect(playedAudioCtx.destination);
+    node.connect(outputAnalyser || playedAudioCtx.destination);
     const when = Math.max(playedAudioCtx.currentTime + .045, outputTime || 0);
     node.start(when);
     outputTime = when + buffer.duration;
     outputSources.add(node);
-    node.onended = () => outputSources.delete(node);
+    node.onended = () => {outputSources.delete(node);if(connected&&!outputSources.size)setStatus('Listening — you can continue speaking');};
   }
 
   function eventFromGateway(payload) {
@@ -184,7 +210,7 @@
       case "audio-transcript-done":
         message("assistant", event.transcript || assistantTranscript);
         assistantTranscript = "";
-        setStatus("Listening — you can continue speaking");
+        if(!outputSources.size)setStatus("Listening — you can continue speaking");
         break;
       case "input-transcription-completed":
         message("user", event.transcript);
@@ -227,6 +253,7 @@
       if (!socket || socket.readyState !== WebSocket.OPEN) return;
       if (socket.bufferedAmount > 220000) return; // avoid runaway queue
       const input = event.inputBuffer.getChannelData(0);
+      micLevel=muted?0:Math.sqrt(input.reduce((sum,v)=>sum+v*v,0)/input.length);
       socket.send(JSON.stringify({
         type: "input-audio-append",
         audio: monoPcmBase64(input, audioCtx.sampleRate)
@@ -283,6 +310,7 @@
   }
 
   async function start() {
+    if(!session){location.href='login.html';return;}
     if (starting || connected || !access?.voice_enabled) return;
     starting = true;
     ui.start.disabled = true;
@@ -298,6 +326,7 @@
       });
       playedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
       await playedAudioCtx.resume();
+      outputAnalyser=playedAudioCtx.createAnalyser();outputAnalyser.fftSize=256;outputAnalyser.connect(playedAudioCtx.destination);
       setStatus("Checking Voice AI service...");
       // The trial is consumed at the start request, never from simply opening the page.
       const rights = await api("/api/voice-access",{action:"start"});
@@ -311,6 +340,7 @@
       startedAt = Date.now();
       ui.start.hidden = true;
       ui.stop.hidden = false;
+      if($("muteVoice")){$("muteVoice").hidden=false;$("muteVoice").setAttribute('aria-pressed','false');$("muteVoice").textContent='Mute microphone';}muted=false;
       ui.stage.classList.add("connected");
       setStatus("Listening — what can we procure for you?");
       ui.info.textContent = "Microphone is active. You can interrupt naturally. End conversation to stop.";
@@ -346,7 +376,7 @@
 
   async function stop(refresh=true) {
     if (timerInterval) {clearInterval(timerInterval);timerInterval=null;}
-    connected=false;
+    connected=false;micLevel=0;state("idle");
     const oldSocket=socket;socket=null;
     if (oldSocket && oldSocket.readyState === WebSocket.OPEN) {
       try {oldSocket.send(JSON.stringify({type:"session-close"}));}catch{}
@@ -359,7 +389,8 @@
     cutPlayback();
     try {await playedAudioCtx?.close();}catch{} playedAudioCtx=null;
     ui.stage.classList.remove("connected");
-    ui.stop.hidden = true; ui.start.hidden=false;ui.timer.hidden=true;
+    ui.stop.hidden = true;if($("muteVoice"))$("muteVoice").hidden=true; ui.start.hidden=false;ui.timer.hidden=true;
+    if(conversation.some(m=>m.role==='user'))await persist().catch(e=>saveNotice('Latest transcript not saved: '+detail(e)+' Use Confirm & submit to retry.',true));
     await reportUsage();
     if (refresh) {
       try { await refreshAccess(); } catch(e){ showError(detail(e)); }
@@ -381,5 +412,7 @@
       navigator.sendBeacon && console.debug("GoProcures voice finished after",seconds,"seconds");
     }
   });
-  boot();
+  $("muteVoice")?.addEventListener('click',()=>{muted=!muted;microphone?.getAudioTracks().forEach(t=>t.enabled=!muted);$("muteVoice").setAttribute('aria-pressed',String(muted));$("muteVoice").textContent=muted?'Unmute microphone':'Mute microphone';ui.info.textContent=muted?'Microphone muted. The AI may finish speaking.':'Microphone is active. End conversation to stop.';});
+  $("confirmVoiceRequest")?.addEventListener('click',async()=>{const button=$("confirmVoiceRequest");button.disabled=true;try{await persist(true);}catch(e){saveNotice('Request not confirmed: '+detail(e)+' Please retry.',true);}finally{button.disabled=!conversation.some(m=>m.role==='user');}});
+  animateAudio();boot();
 })();

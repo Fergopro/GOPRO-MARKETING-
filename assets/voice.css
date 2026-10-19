@@ -181,3 +181,4 @@ a{color:inherit;text-decoration:none}
   .voice-title{letter-spacing:-2px}
   .voice-orb-wrap{width:200px;height:200px}
 }
+[hidden]{display:none!important}.voice-wave{width:100%;height:46px;max-width:550px}.voice-stage.connected .voice-orb{animation:none;transform:scale(calc(1 + var(--audio-level,0)*.15))}.voice-stage[data-state=speaking] .voice-orb{box-shadow:0 0 calc(40px + var(--audio-level,0)*70px) #48baff77}.voice-btn{cursor:pointer}.voice-btn:not(.primary):not(.stop){background:#162746;color:#e7edff}.voice-card [data-error=true]{color:#ffc0c9}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.voice-orb{transform:none!important}}

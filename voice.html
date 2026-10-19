@@ -30,13 +30,13 @@
             <div class="voice-ring r1"></div>
             <div class="voice-ring r2"></div>
             <div class="voice-ring r3"></div>
-            <div class="voice-orb">AI</div>
+            <div class="voice-orb"></div>
           </div>
-          <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><strong>Checking your account...</strong></div>
+          <canvas class="voice-wave" id="voiceWave" width="550" height="46" aria-hidden="true"></canvas><div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><strong>Checking your account...</strong></div>
           <div class="voice-timer" id="voiceTimer" hidden>1:00</div>
           <div class="voice-controls">
             <button class="voice-btn primary" type="button" id="startVoice" disabled>🎙 Start Voice AI</button>
-            <button class="voice-btn stop" type="button" id="stopVoice" hidden>End conversation</button>
+            <button class="voice-btn" type="button" id="muteVoice" aria-pressed="false" hidden>Mute microphone</button><button class="voice-btn stop" type="button" id="stopVoice" hidden>End conversation</button>
             <button class="voice-btn" type="button" id="retryVoice" hidden>Try again</button>
           </div>
           <div class="voice-alert" id="voiceError" role="alert" hidden></div>
@@ -63,7 +63,7 @@
             <p>The conversation transcript will appear here when available.</p>
           </div>
         </div>
-        <p class="voice-fineprint">AI responses may contain errors. Supplier prices, specifications and availability must be verified before ordering.</p>
+        <div class="voice-card"><button id="confirmVoiceRequest" class="voice-btn primary" disabled>Confirm &amp; submit request</button><p id="voiceSaveStatus" role="status"></p></div><p class="voice-fineprint">AI responses may contain errors. Supplier prices, specifications and availability must be verified before ordering.</p>
       </aside>
     </div>
     <div id="voiceEngineRoot" hidden></div>

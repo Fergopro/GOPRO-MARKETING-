@@ -433,11 +433,13 @@ function queueLeadSave() {
 ========================================================= */
 
 async function askGoProcuresAI(text) {
+  const {data:{session}}=await portalSupabase.auth.getSession();
   const response = await fetch("/api/goprocure-ai", {
     method: "POST",
 
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + (session?.access_token || "")
     },
 
     body: JSON.stringify({

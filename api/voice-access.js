@@ -79,10 +79,10 @@ async function getEntitlement(secret, userId){
   return (await create.json())[0];
 }
 
-async function patchEntitlement(secret, userId, patch){
+async function patchEntitlement(secret, userId, patch, guard=""){
   const r = await fetch(
     U + "/rest/v1/user_entitlements?user_id=eq." +
-    encodeURIComponent(userId),
+    encodeURIComponent(userId) + guard,
     {
       method:"PATCH",
       headers:{
@@ -189,8 +189,10 @@ export default async function handler(req, res){
               voice_trial_started_at:
                 new Date().toISOString(),
               voice_trial_seconds:60
-            }
+            },
+            "&voice_trial_started_at=is.null&voice_trial_seconds=lt.60"
           );
+        if(!entitlement)return res.status(402).json({error:"Your free voice trial is already reserved or used.",upgrade_required:true});
       }
 
       const cookieValue =
