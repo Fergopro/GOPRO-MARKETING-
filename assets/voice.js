@@ -288,7 +288,7 @@
       inputAudioFormat:{type:"audio/pcm",sampleRate:24000},
       outputAudioFormat:{type:"audio/pcm",sampleRate:24000},
       outputModalities:["audio"],
-      turnDetection:{type:"server-vad"},
+      turnDetection:{type:"server-vad",threshold:0.72,prefixPaddingMs:400,silenceDurationMs:1100},
       inputAudioTranscription:{model:"gpt-4o-mini-transcribe"}
     }}));
   }
@@ -305,7 +305,7 @@
         throw new Error("Your browser requires HTTPS and microphone support.");
       }
       microphone = await navigator.mediaDevices.getUserMedia({
-        audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
+        audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false}
       });
       playedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
       await playedAudioCtx.resume();
