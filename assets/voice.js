@@ -274,8 +274,8 @@
     ws.send(JSON.stringify({type:"session-update",config:{
       voice:"cedar",
       instructions: procurementBrain,
-      inputAudioFormat:{type:"audio/pcm",sampleRate:24000},
-      outputAudioFormat:{type:"audio/pcm",sampleRate:24000},
+      inputAudioFormat:{type:"audio/pcm",rate:24000},
+      outputAudioFormat:{type:"audio/pcm",rate:24000},
       outputModalities:["audio"],
       turnDetection:{type:"server-vad",threshold:0.72,prefixPaddingMs:400,silenceDurationMs:1100},
       inputAudioTranscription:{model:"gpt-4o-mini-transcribe"}
