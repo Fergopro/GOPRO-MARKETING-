@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         },
 
         body: JSON.stringify({
-model: "inclusionai/ling-3.0-flash-sante-free",
+model: "inclusionai/ling-3.0-flash-sante",
 
   messages: [
             {
