@@ -8,7 +8,7 @@ export class ProcurementRequestStore {
       if(!requirement.trim())throw new Error('Add your procurement requirements first.');
       const payload={ai_conversation:snapshot,updated_at:new Date().toISOString()};
       if(confirmed){payload.client_confirmed=true;payload.confirmed_at=new Date().toISOString();}
-      if(!this.id){Object.assign(payload,{auth_user_id:this.user.id,client_name:this.user.user_metadata?.full_name||this.user.email?.split('@')[0]||'Client',client_email:this.user.email,region:'To be confirmed',request_text:requirement,status:'New',category:this.channel==='voice'?'Voice AI Procurement':'AI Procurement'});const {data,error}=await this.client.from('requests').insert(payload).select('id').single();if(error)throw error;this.id=data.id;}
+      if(!this.id){Object.assign(payload,{auth_user_id:this.user.id,client_name:this.user.user_metadata?.full_name||this.user.email?.split('@')[0]||'Client',client_email:this.user.email,region:'To be confirmed',request_text:requirement,category:this.channel==='voice'?'Voice AI Procurement':'AI Procurement'});const {data,error}=await this.client.from('requests').insert(payload).select('id').single();if(error)throw error;this.id=data.id;}
       else {if(confirmed)payload.request_text=requirement;const {data,error}=await this.client.from('requests').update(payload).eq('id',this.id).eq('auth_user_id',this.user.id).select('id').single();if(error)throw error;if(!data)throw new Error('Request could not be updated.');}
       return this.id;
     };
