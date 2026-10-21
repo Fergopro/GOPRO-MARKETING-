@@ -1470,7 +1470,7 @@
 
                   <span>
                     ${escapeHtml(
-                      row.region || ""
+                      row.region && row.region !== "To be confirmed" ? row.region : (row.status === "New" ? "Location in procurement brief" : "Delivery details in brief")
                     )}
                   </span>
 
