@@ -394,9 +394,23 @@ function openRequest(id){
 
     '<div class="section">'+
       '<h3>AI Conversation</h3>'+
-      '<div class="convo" id="requestConversation">'+(convo.length?convoHtml:'<div class="empty">Open the conversation only when needed.</div>')+'</div>'+
+      '<button class="mini" id="loadConversation" type="button">View saved conversation</button>'+
+      '<div class="convo" id="requestConversation">'+(convo.length?convoHtml:'<div class="empty">Conversation is loaded on demand to keep this page fast.</div>')+'</div>'+
     '</div>';
 
+  const transcriptButton=$("loadConversation");
+  transcriptButton.onclick=async()=>{
+    transcriptButton.disabled=true;transcriptButton.textContent="Loading conversation…";
+    try{
+      const r=await fetch("/api/admin?action=conversation&request_id="+encodeURIComponent(id),{headers:{Authorization:"Bearer "+session.access_token}});
+      const payload=await r.json();if(!r.ok)throw new Error(payload.error||"Unable to load conversation");
+      const items=Array.isArray(payload.request?.ai_conversation)?payload.request.ai_conversation:[];
+      const parent=$("requestConversation");parent.replaceChildren();
+      if(!items.length){parent.textContent="No AI conversation stored for this request.";return;}
+      for(const item of items){const d=document.createElement("div");d.className="msg "+(item.role==="assistant"?"assistant":"user");const label=document.createElement("b");label.textContent=item.role==="assistant"?"GOPROCURES AI":"CLIENT";d.append(label,document.createTextNode(String(item.content||"")));parent.append(d);}
+      transcriptButton.textContent="Conversation loaded";
+    }catch(e){flash(e.message,"error");transcriptButton.disabled=false;transcriptButton.textContent="Retry conversation";}
+  };
   const sel=$("statusSelect");
 
   [...sel.options].forEach(o=>{
