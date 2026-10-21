@@ -8,6 +8,8 @@ const S=createClient(
 let session=null;
 let db=null;
 let current=null;
+let quoteBusy=false;
+let noticeTimer=null;
 
 const $=id=>document.getElementById(id);
 
@@ -49,7 +51,7 @@ async function call(method="GET",body){
     body:body?JSON.stringify(body):undefined
   });
 
-  const j=await r.json();
+  let j;try{j=await r.json();}catch{throw new Error("Server returned an invalid response (HTTP "+r.status+").");}
 
   if(!r.ok){
     throw new Error(j.error||"Admin request failed");
@@ -62,7 +64,8 @@ function flash(text,kind="ok"){
   const n=$("notice");
   n.textContent=text;
   n.className="notice show "+kind;
-  setTimeout(()=>n.className="notice",2600);
+  clearTimeout(noticeTimer);
+  noticeTimer=setTimeout(()=>n.className="notice",4200);
 }
 
 async function boot(){
@@ -309,7 +312,7 @@ function openRequest(id){
                   : '<button class="quote-upload js-upload-quote" data-id="'+q.id+'">Upload quote PDF</button>')+
                 (q.visible_to_client
                   ? '<button class="quote-unpublish js-publish" data-id="'+q.id+'" data-visible="false">Hide from client</button>'
-                  : '<button class="quote-publish js-publish" data-id="'+q.id+'" data-visible="true">Publish to client</button>')+
+                  : '<button class="quote-publish js-publish" data-id="'+q.id+'" data-visible="true">Publish to client</button><button class="quote-upload js-edit-quote" data-id="'+q.id+'">Edit details</button>')+
               '</div>'+
             '</div>'+
             '<span class="pill">'+esc(q.status||"received")+'</span>'+
@@ -391,7 +394,7 @@ function openRequest(id){
 
     '<div class="section">'+
       '<h3>AI Conversation</h3>'+
-      '<div class="convo">'+convoHtml+'</div>'+
+      '<div class="convo" id="requestConversation">'+(convo.length?convoHtml:'<div class="empty">Open the conversation only when needed.</div>')+'</div>'+
     '</div>';
 
   const sel=$("statusSelect");
@@ -468,31 +471,64 @@ function openRequest(id){
     }
   };
 
+  const formFeedback=document.createElement("p");formFeedback.className="quote-form-feedback";formFeedback.setAttribute("role","status");
+  $("addQuote").insertAdjacentElement("afterend",formFeedback);
+  function quoteFeedback(message,isError=false){formFeedback.textContent=message;formFeedback.classList.toggle("error",isError);formFeedback.scrollIntoView({block:"nearest",behavior:"auto"});}
   $("addQuote").onclick=async()=>{
+    if(quoteBusy)return;
+    const supplier=$("qSupplier").value.trim(),file=$("qFile").files?.[0];
+    const price=$("qPrice").value.trim(),days=$("qDays").value.trim();
+    if(!supplier&&!file){quoteFeedback("Enter a supplier name or choose a PDF quote first.",true);return;}
+    if(file&&file.size>15*1024*1024){quoteFeedback("Quote file must be smaller than 15 MB.",true);return;}
+    if(file&&!/\.(pdf|jpe?g|png|webp|xlsx?|docx?)$/i.test(file.name)){quoteFeedback("Use a PDF, image, Excel or Word quotation.",true);return;}
+    if(price&&(!Number.isFinite(Number(price))||Number(price)<0)){quoteFeedback("Enter a valid total price.",true);return;}
+    if(days&&(!Number.isInteger(Number(days))||Number(days)<0)){quoteFeedback("Enter a valid delivery time in days.",true);return;}
+    quoteBusy=true;const btn=$("addQuote");btn.disabled=true;btn.textContent="Saving quotation…";
+    let createdId=null;
     try{
-      const result=await call("POST",{
-        action:"quote",
-        request_id:id,
-        supplier_name:$("qSupplier").value,
-        total_price:$("qPrice").value,
-        currency:$("qCurrency").value,
-        delivery_days:$("qDays").value,
-        payment_terms:$("qTerms").value,
-        admin_notes:$("qNotes").value
-      });
-
-      const file=$("qFile").files?.[0];
-
-      if(file&&result.quote?.id){
-        await uploadQuoteFile(id,result.quote.id,file);
+      quoteFeedback("Saving private supplier quotation…");
+      const result=await call("POST",{action:"quote",request_id:id,supplier_name:supplier,file_pending:!!file,total_price:price,currency:$("qCurrency").value,delivery_days:days,payment_terms:$("qTerms").value,admin_notes:$("qNotes").value});
+      createdId=result.quote?.id;
+      if(file){
+        if(!createdId)throw new Error("Quotation record was not returned.");
+        btn.textContent="Uploading PDF…";
+        quoteFeedback("Uploading "+file.name+" securely…");
+        await uploadQuoteFile(id,createdId,file);
       }
-
-      flash("Supplier quote added");
+      flash("Supplier quote saved privately");
+      quoteFeedback("Supplier quotation saved. Complete any missing supplier or price details before publishing.");
       await load();
     }catch(e){
-      flash(e.message,"error");
-    }
+      const prefix=createdId?"Quote GP-"+id+" was created but file upload or update failed. ":"";
+      quoteFeedback(prefix+(e.message||"Please retry."),true);
+      flash(e.message||"Unable to save supplier quote","error");
+    }finally{quoteBusy=false;btn.disabled=false;btn.textContent="+ Add supplier quote";}
   };
+
+  document.querySelectorAll(".js-edit-quote").forEach(button=>{
+    button.onclick=()=>{
+      const quote=(db.quotes||[]).find(q=>q.id===Number(button.dataset.id));
+      if(!quote)return;
+      $("qSupplier").value=quote.supplier_name||"";
+      $("qPrice").value=quote.total_price??"";
+      $("qCurrency").value=quote.currency||"ZAR";
+      $("qDays").value=quote.delivery_days??"";
+      $("qTerms").value=quote.payment_terms||"";
+      $("qNotes").value=quote.admin_notes||"";
+      const add=$("addQuote");
+      add.textContent="Save changes to draft";
+      add.onclick=async()=>{
+        if(quoteBusy)return;
+        quoteBusy=true;add.disabled=true;
+        try{
+          await call("POST",{action:"edit_quote",quote_id:quote.id,supplier_name:$("qSupplier").value,total_price:$("qPrice").value,currency:$("qCurrency").value,delivery_days:$("qDays").value,payment_terms:$("qTerms").value,admin_notes:$("qNotes").value});
+          quoteFeedback("Draft quotation details updated.");await load();
+        }catch(e){quoteFeedback(e.message,true);}finally{quoteBusy=false;add.disabled=false;}
+      };
+      quoteFeedback("Editing saved quote #"+quote.id+". Make changes and choose Save changes to draft.");
+      $("qSupplier").focus();
+    };
+  });
 
   document.querySelectorAll(".js-publish").forEach(button=>{
     button.onclick=async()=>{
