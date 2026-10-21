@@ -29,8 +29,15 @@ export default async function handler(req,res){
 
   try{
     if(req.method==="GET"){
+      const requestId=Number(req.query?.request_id);
+      if(req.query?.action==="conversation"){
+        if(!Number.isSafeInteger(requestId)||requestId<1)return res.status(400).json({error:"Invalid request"});
+        const found=await get(secret,"requests?id=eq."+requestId+"&select=id,ai_conversation&limit=1");
+        if(!found.length)return res.status(404).json({error:"Request not found"});
+        return res.status(200).json({request:found[0]});
+      }
       const [requests,quotes,files,leads,entitlements]=await Promise.all([
-        get(secret,"requests?select=*&order=created_at.desc"),
+        get(secret,"requests?select=id,auth_user_id,client_name,client_email,category,region,quantity,urgency,request_text,summary,status,client_confirmed,confirmed_at,created_at,updated_at&order=created_at.desc&limit=200"),
         get(secret,"quotes?select=*&order=id.desc"),
         get(secret,"request_files?select=*&order=created_at.desc"),
         get(secret,"leads?select=id,name,email,company,message,status,created_at&order=created_at.desc&limit=50"),
@@ -116,20 +123,43 @@ export default async function handler(req,res){
 
     if(b.action==="quote"){
       const id=Number(b.request_id),supplier=String(b.supplier_name||"").trim().slice(0,200);
-      if(!id||!supplier) return res.status(400).json({error:"Request and supplier required"});
+      const filePending=b.file_pending===true;
+      if(!Number.isSafeInteger(id)||id<1||(!supplier&&!filePending)) return res.status(400).json({error:"Enter a supplier name or attach a quotation file."});
       const price=b.total_price===""?null:Number(b.total_price);
       const days=b.delivery_days===""?null:Number(b.delivery_days);
-      const r=await fetch(U+"/rest/v1/quotes",{method:"POST",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=representation"},body:JSON.stringify({request_id:id,supplier_name:supplier,total_price:Number.isFinite(price)?price:null,currency:String(b.currency||"ZAR").slice(0,10),delivery_days:Number.isFinite(days)?days:null,payment_terms:String(b.payment_terms||"").slice(0,300)||null,admin_notes:String(b.admin_notes||"").slice(0,1000)||null,status:"received",visible_to_client:false,submitted_at:new Date().toISOString()})});
+      const r=await fetch(U+"/rest/v1/quotes",{method:"POST",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=representation"},body:JSON.stringify({request_id:id,supplier_name:supplier||null,total_price:Number.isFinite(price)?price:null,currency:String(b.currency||"ZAR").slice(0,10),delivery_days:Number.isFinite(days)?days:null,payment_terms:String(b.payment_terms||"").slice(0,300)||null,admin_notes:String(b.admin_notes||"").slice(0,1000)||null,status:"received",visible_to_client:false,submitted_at:new Date().toISOString()})});
       if(!r.ok) throw new Error(await r.text());
       const created=await r.json();
       return res.status(200).json({success:true,quote:created[0]||null});
     }
 
+    if(b.action==="edit_quote"){
+      const id=Number(b.quote_id);
+      if(!Number.isSafeInteger(id)||id<1)return res.status(400).json({error:"Invalid supplier quotation"});
+      const supplier=String(b.supplier_name||"").trim().slice(0,200);
+      const amount=b.total_price===""||b.total_price==null?null:Number(b.total_price);
+      if(amount!==null&&(!Number.isFinite(amount)||amount<0))return res.status(400).json({error:"Invalid quotation price"});
+      const days=b.delivery_days===""||b.delivery_days==null?null:Number(b.delivery_days);
+      if(days!==null&&(!Number.isInteger(days)||days<0))return res.status(400).json({error:"Invalid delivery time"});
+      const values={supplier_name:supplier||null,total_price:amount,currency:String(b.currency||"ZAR").trim().slice(0,10),delivery_days:days,payment_terms:String(b.payment_terms||"").trim().slice(0,300)||null,admin_notes:String(b.admin_notes||"").trim().slice(0,1000)||null};
+      const r=await fetch(U+"/rest/v1/quotes?id=eq."+id+"&visible_to_client=is.false",{method:"PATCH",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=representation"},body:JSON.stringify(values)});
+      if(!r.ok)throw new Error(await r.text());
+      const rows=await r.json();
+      if(!rows.length)return res.status(409).json({error:"Quote is already published or unavailable. Hide it before editing."});
+      return res.status(200).json({success:true,quote:rows[0]});
+    }
+
     if(b.action==="publish_quote"){
       const id=Number(b.quote_id);
       const requestId=Number(b.request_id);
-      const visible=Boolean(b.visible);
-      if(!id) return res.status(400).json({error:"Invalid quote"});
+      const visible=b.visible===true;
+      if(!Number.isSafeInteger(id)||id<1)return res.status(400).json({error:"Invalid quote"});
+      const matched=await get(secret,"quotes?id=eq."+id+"&select=id,request_id,supplier_name,total_price,file_storage_path&limit=1");
+      const quote=matched[0];
+      if(!quote||quote.request_id!==requestId)return res.status(404).json({error:"Supplier quote not found for this request"});
+      if(visible&&(!quote.supplier_name||quote.total_price==null||Number(quote.total_price)<=0)){
+        return res.status(409).json({error:"Complete the supplier name and valid total price before publishing. Unpriced PDF drafts must remain private."});
+      }
       const r=await fetch(U+"/rest/v1/quotes?id=eq."+id,{method:"PATCH",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=minimal"},body:JSON.stringify({visible_to_client:visible,published_at:visible?new Date().toISOString():null,status:visible?"published":"received"})});
       if(!r.ok) throw new Error(await r.text());
 
@@ -145,7 +175,9 @@ export default async function handler(req,res){
       const id=Number(b.quote_id);
       const path=String(b.storage_path||"");
       const name=String(b.file_name||"").slice(0,255);
-      if(!id||!path||path.includes("..")) return res.status(400).json({error:"Invalid quote file"});
+      if(!Number.isSafeInteger(id)||id<1||!path||path.includes(".."))return res.status(400).json({error:"Invalid quote file"});
+      const found=await get(secret,"quotes?id=eq."+id+"&select=id,request_id&limit=1");
+      if(!found.length||!path.startsWith("admin-quotes/"+found[0].request_id+"/"+id+"/"))return res.status(400).json({error:"Quote file location does not match this quotation"});
       const r=await fetch(U+"/rest/v1/quotes?id=eq."+id,{method:"PATCH",headers:{"Content-Type":"application/json",apikey:secret,Authorization:"Bearer "+secret,Prefer:"return=minimal"},body:JSON.stringify({file_storage_path:path,quote_file_name:name||null})});
       if(!r.ok) throw new Error(await r.text());
       return res.status(200).json({success:true});
