@@ -30,3 +30,29 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit;
 .quote-form-feedback:empty{display:none}.quote-form-feedback.error{border-color:rgba(255,88,112,.3);background:rgba(255,88,112,.08);color:#ffb8c2}
 .action:disabled,.mini:disabled{cursor:wait;opacity:.65}
 @media(prefers-reduced-motion:reduce){.req{transition:none}}
+
+/* Testimonials moderation dashboard */
+.testimonials-manager{margin-top:24px;scroll-margin-top:24px}
+.tm-layout{display:grid;grid-template-columns:minmax(265px,.8fr) minmax(300px,1.2fr);gap:20px;padding:20px}
+.tm-form{display:grid;gap:10px;align-content:start}
+.tm-form h3{margin:0;color:#f7f8fb;font-size:17px}
+.tm-hint{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 6px}
+.tm-form label{font-size:11px;font-weight:700;color:#9eabc2}
+.tm-form input,.tm-form textarea,.tm-form select{width:100%;min-width:0;border:1px solid rgba(255,255,255,.14);background:#070b16;color:#f7f8fb;border-radius:10px;padding:12px;outline-offset:2px}
+.tm-form textarea{resize:vertical;min-height:125px;line-height:1.5}
+.tm-actions,.tm-list-head,.tm-card-actions,.tm-card-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tm-actions .action{margin-top:0}
+.tm-form button:disabled,.tm-card button:disabled{opacity:.55;cursor:wait}
+.tm-feedback{font-size:12px;line-height:1.5;color:#bcebd4;min-height:20px;margin:2px 0}
+.tm-feedback.error{color:#ffb4c0}
+.tm-list-head{margin:0 0 14px;color:#c7d2e6}
+.tm-reviews{min-width:0}
+.tm-card{border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:14px;padding:16px;margin:0 0 12px}
+.tm-card-name{font-size:13px;font-weight:800;color:#f7f8fb;min-width:0;overflow-wrap:anywhere}
+.tm-state{font-size:10px;color:#d4b6ff;border:1px solid rgba(141,104,255,.3);background:rgba(141,104,255,.12);padding:5px 9px;border-radius:99px}
+.tm-state.published{color:#bcebd4;border-color:rgba(82,217,160,.35);background:rgba(82,217,160,.1)}
+.tm-stars{color:#efc978;letter-spacing:2px;margin-top:8px}
+.tm-message{font-size:12px;color:#aebbd0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.tm-card-actions{justify-content:flex-start}
+@media(max-width:900px){.tm-layout{grid-template-columns:1fr}}
+@media(max-width:520px){.tm-layout{padding:12px}}
