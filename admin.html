@@ -13,6 +13,7 @@
     <div class="admin-badge">ADMIN CONTROL</div>
     <nav class="nav">
       <a class="active" href="admin.html">Procurements</a>
+      <a href="#testimonials-manager">Testimonials</a>
       <a href="dashboard.html">Client View</a>
       <a href="index.html">Procurement AI</a>
     </nav>
@@ -79,6 +80,22 @@
         <div id="leads"><div class="empty">Loading leads...</div></div>
       </section>
     </div>
+    <section class="panel testimonials-manager" id="testimonials-manager" aria-labelledby="tmHeading">
+      <div class="panel-head"><h2 id="tmHeading">Customer Testimonials</h2><span id="tmCount">Loading reviews...</span></div>
+      <div class="tm-layout">
+        <form id="tmForm" class="tm-form">
+          <h3 id="tmFormTitle">Add genuine customer review</h3>
+          <p class="tm-hint">Publish only real feedback with permission. Editing returns a review to pending.</p>
+          <label for="tmName">Customer name</label><input id="tmName" maxlength="120" required autocomplete="off">
+          <label for="tmCompany">Company (optional)</label><input id="tmCompany" maxlength="160" autocomplete="off">
+          <label for="tmMessage">Customer's review</label><textarea id="tmMessage" rows="5" minlength="10" maxlength="2000" required></textarea>
+          <label for="tmRating">Rating</label><select id="tmRating"><option value="5">★★★★★ 5 stars</option><option value="4">★★★★ 4 stars</option><option value="3">★★★ 3 stars</option><option value="2">★★ 2 stars</option><option value="1">★ 1 star</option><option value="">No rating</option></select>
+          <div class="tm-actions"><button class="action" id="tmSave" type="submit">Save pending review</button><button type="button" class="secondary" id="tmCancel" hidden>Cancel editing</button></div>
+          <p id="tmFeedback" class="tm-feedback" role="status" aria-live="polite"></p>
+        </form>
+        <div class="tm-reviews"><div class="tm-list-head"><strong>Review moderation</strong><button id="tmRefresh" class="mini" type="button">↻ Refresh</button></div><div id="tmList" aria-live="polite"><p class="empty">Loading testimonials…</p></div></div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -97,5 +114,6 @@
 </div>
 
 <script type="module" src="assets/admin.js"></script>
+<script type="module" src="assets/admin-testimonials.js"></script>
 </body>
 </html>
