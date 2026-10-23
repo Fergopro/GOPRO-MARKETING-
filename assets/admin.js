@@ -546,24 +546,28 @@ function openRequest(id){
 
   document.querySelectorAll(".js-publish").forEach(button=>{
     button.onclick=async()=>{
+      if(button.disabled)return;
+      const publish=button.dataset.visible==="true";
+      const quoteId=Number(button.dataset.id);
+      const quote=(db.quotes||[]).find(q=>q.id===quoteId);
+      if(publish&&(!quote?.supplier_name||!(Number(quote?.total_price)>0))){
+        quoteFeedback("Before publishing: enter the supplier name and total price in the draft, then save it. A PDF upload alone remains private.",true);
+        return;
+      }
+      if(publish&&!window.confirm("Publish this quotation to the customer? They will be able to view the price and attached PDF."))return;
+      const original=button.textContent;
+      button.disabled=true;button.textContent=publish?"Publishing…":"Hiding…";
       try{
         await call("POST",{
-          action:"publish_quote",
-          quote_id:Number(button.dataset.id),
-          request_id:id,
-          visible:button.dataset.visible==="true"
+          action:"publish_quote",quote_id:quoteId,request_id:id,visible:publish
         });
-
-        flash(
-          button.dataset.visible==="true"
-            ? "Quote published to client"
-            : "Quote hidden from client"
-        );
-
+        flash(publish?"Quote published to client's dashboard":"Quote hidden from client");
+        quoteFeedback(publish?"Quotation published successfully. The customer can now view it in their dashboard.":"Quotation is now private.");
         await load();
       }catch(e){
-        flash(e.message,"error");
-      }
+        quoteFeedback(e.message||"Could not change quotation visibility.",true);
+        flash(e.message||"Quote visibility failed","error");
+      }finally{button.disabled=false;button.textContent=original;}
     };
   });
 
