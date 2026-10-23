@@ -19,14 +19,30 @@ if(send)send.addEventListener('click',()=>submitMessage(input.value));if(input)i
 const toggle=$('#mobileToggle'),mobile=$('#mobileMenu');if(toggle&&mobile){function close(){mobile.classList.remove('open');toggle.setAttribute('aria-expanded','false')}toggle.addEventListener('click',()=>{const opened=mobile.classList.toggle('open');toggle.setAttribute('aria-expanded',String(opened))});$$('a,button',mobile).forEach(a=>a.addEventListener('click',close));}
 $$('.auth-signout-link').forEach(b=>b.addEventListener('click',async()=>{await initAuth();if(supabase)await supabase.auth.signOut();location.href='login.html'}));$('#newChat')?.addEventListener('click',()=>{if(busy)return;if(saveError&&!window.confirm('This conversation has unsaved work. Start a new chat?'))return;conversation=[];activeRequestId=null;requestStore=null;saveError=false;confirmedRequestId=null;const confirm=$('#confirmTextRequest');if(confirm)confirm.textContent='Confirm & submit request';$('#aiConversation').replaceChildren();$('#attachmentList')?.replaceChildren();saveNotice('');updateAuth();input?.focus();});
 /* Approved reviews only; use supplied ratings without manufacturing missing data. */
-let reviewIndex=0,reviews=[],position=0,paused=false,hovered=false,focused=false,lastFrame=0;
-const track=$('#reviewTrack'),viewport=$('#reviewViewport'),reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
-function showReviews(){if(!track||!reviews.length)return;track.replaceChildren();reviews.forEach(r=>{const card=document.createElement('article');card.className='review-card';if(Number.isInteger(Number(r.rating))&&Number(r.rating)>=1&&Number(r.rating)<=5){const stars=document.createElement('div');stars.className='stars';stars.textContent='★'.repeat(Number(r.rating));stars.setAttribute('aria-label',r.rating+' out of 5 stars');card.append(stars);}const quote=document.createElement('p');quote.textContent='“'+r.message+'”';card.append(quote);if(r.name){const name=document.createElement('strong');name.textContent=r.name;card.append(name);}if(r.company){const company=document.createElement('small');company.textContent=r.company;card.append(company);}track.append(card);});}
-async function loadReviews(){try{const res=await fetch(GP.url+'/rest/v1/testimonials?select=name,company,message,rating&approved=eq.true&order=created_at.desc&limit=30',{headers:{apikey:GP.key}});if(!res.ok)throw Error('Reviews unavailable');const result=await res.json();reviews=Array.isArray(result)?result.filter(r=>typeof r.message==='string'&&r.message.trim()):[];showReviews();}catch(e){console.warn('Reviews unavailable',e);}}
-function moveReview(delta){if(!track||!reviews.length)return;const step=track.children[0].getBoundingClientRect().width+20;const max=Math.max(0,track.scrollWidth-viewport.clientWidth);position=Math.max(0,Math.min(max,position+delta*step));track.style.transform='translateX(-'+position+'px)';}
-$('#reviewsNext')?.addEventListener('click',()=>moveReview(1));$('#reviewsPrev')?.addEventListener('click',()=>moveReview(-1));$('#reviewsPause')?.addEventListener('click',e=>{paused=!paused;e.currentTarget.setAttribute('aria-pressed',String(paused));e.currentTarget.setAttribute('aria-label',paused?'Resume automatic scrolling':'Pause automatic scrolling');e.currentTarget.textContent=paused?'▶':'Ⅱ';});
-viewport?.addEventListener('mouseenter',()=>hovered=true);viewport?.addEventListener('mouseleave',()=>hovered=false);viewport?.addEventListener('focusin',()=>focused=true);viewport?.addEventListener('focusout',e=>{focused=viewport.contains(e.relatedTarget);});viewport?.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();moveReview(e.key==='ArrowLeft'?-1:1);}});
-function animateReviews(time){const dt=lastFrame?Math.min(time-lastFrame,80):0;lastFrame=time;if(track&&reviews.length>1&&!paused&&!hovered&&!focused&&!document.hidden&&!reduced.matches){const max=Math.max(0,track.scrollWidth-viewport.clientWidth);if(max>0){position+=dt*.018;if(position>=max){track.append(track.firstElementChild);position=Math.max(0,position-(track.lastElementChild.getBoundingClientRect().width+20));}track.style.transform='translateX(-'+position+'px)';}}requestAnimationFrame(animateReviews);}requestAnimationFrame(animateReviews);
+let reviews=[];
+const track=$('#reviewTrack');
+function showReviews(){
+ if(!track)return;
+ track.replaceChildren();
+ if(!reviews.length){const p=document.createElement('p');p.className='review-empty';p.textContent='Verified customer testimonials will appear here.';track.append(p);return;}
+ reviews.forEach(r=>{
+   const card=document.createElement('article');card.className='review-card';
+   if(Number.isInteger(Number(r.rating))&&Number(r.rating)>=1&&Number(r.rating)<=5){const stars=document.createElement('div');stars.className='stars';stars.textContent='★'.repeat(Number(r.rating));card.append(stars);}
+   const quote=document.createElement('p');quote.textContent='“'+r.message+'”';card.append(quote);
+   if(r.name){const name=document.createElement('strong');name.textContent=r.name;card.append(name);}
+   if(r.company){const company=document.createElement('small');company.textContent=r.company;card.append(company);}
+   track.append(card);
+ });
+}
+async function loadReviews(){
+ try{
+  const res=await fetch(GP.url+'/rest/v1/testimonials?select=name,company,message,rating&approved=eq.true&order=created_at.desc&limit=30',{headers:{apikey:GP.key}});
+  if(!res.ok)throw Error('Reviews unavailable');
+  const result=await res.json();
+  reviews=Array.isArray(result)?result.filter(r=>typeof r.message==='string'&&r.message.trim()):[];
+  showReviews();
+ }catch(e){console.warn('Reviews unavailable',e);}
+}
 /* Parallax is decorative only and respects reduced-motion settings. */
 if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const art=$('.hero-art');let ticking=false;window.addEventListener('scroll',()=>{if(!art||ticking)return;ticking=true;requestAnimationFrame(()=>{const y=Math.min(110,scrollY*.14);art.style.setProperty('--scrollY',y+'px');ticking=false;});},{passive:true});}
 const params=new URLSearchParams(location.search);const initial=params.get('request');if(initial&&input){initAuth().then(()=>{if(user){input.value=initial;$('#assistant')?.scrollIntoView({behavior:'smooth'});}});}initAuth();loadReviews();
