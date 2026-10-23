@@ -1094,20 +1094,10 @@
     ).textContent =
       currentUser.email || "";
 
-    const {
-      data: adminRows
-    } =
-      await supabase
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", currentUser.id)
-        .limit(1);
-
-    if (adminRows?.length) {
-      document.getElementById(
-        "adminConsoleLink"
-      ).style.display = "block";
-    }
+    // Do not delay customer dashboard loading for optional admin navigation.
+    supabase.from("admin_users").select("user_id").eq("user_id",currentUser.id).limit(1)
+      .then(({data})=>{if(data?.length)document.getElementById("adminConsoleLink").style.display="block";})
+      .catch(error=>console.warn("Admin link lookup failed",error));
 
 
     return currentUser;
@@ -1202,47 +1192,24 @@
         );
 
 
-      const {
-        data: quotes,
-        error: quoteError
-      } =
-        await supabase
-          .from("quotes")
-          .select(
-            "id,request_id,status,supplier_name,total_price,currency,delivery_days,payment_terms,quote_file_name,file_storage_path,client_decision,client_decision_at,visible_to_client,published_at"
-          )
-          .in(
-            "request_id",
-            requestIds
-          );
-
-
-      if (!quoteError) {
-        quoteRows =
-          quotes || [];
-      }
-
-      const {
-        data: files,
-        error: fileError
-      } =
-        await supabase
-          .from("request_files")
-          .select(
-            "id,request_id,storage_path,file_name,mime_type,file_size,created_at"
-          )
-          .in(
-            "request_id",
-            requestIds
-          )
-          .order(
-            "created_at",
-            { ascending: false }
-          );
-
-      if (!fileError) {
-        fileRows = files || [];
-      }
+      // Fetch independent collections concurrently: RLS keeps customer quotes private.
+      const [quoteResult,fileResult]=await Promise.all([
+        supabase.from("quotes")
+          .select("id,request_id,status,supplier_name,total_price,currency,delivery_days,payment_terms,quote_file_name,file_storage_path,client_decision,client_decision_at,visible_to_client,published_at")
+          .eq("visible_to_client",true)
+          .in("request_id",requestIds),
+        supabase.from("request_files")
+          .select("id,request_id,storage_path,file_name,mime_type,file_size,created_at")
+          .in("request_id",requestIds)
+          .order("created_at",{ascending:false})
+      ]);
+      if(quoteResult.error){
+        console.error("Customer quote loading failed",quoteResult.error);
+        const note=document.getElementById("dashboardLoadNotice");
+        if(note)note.textContent="Some quotations could not be loaded. Refresh or contact GoProcures.";
+      }else quoteRows=quoteResult.data||[];
+      if(fileResult.error)console.error("Customer attachment loading failed",fileResult.error);
+      else fileRows=fileResult.data||[];
 
     }
 
