@@ -25,17 +25,18 @@ export default async function handler(req,res){
   const action=String(body.action||"decision").toLowerCase();
   const decision=String(body.decision||"").toLowerCase();
 
-  if(!quoteId){
+  if(!Number.isSafeInteger(quoteId)||quoteId<1){
     return res.status(400).json({error:"Invalid quote"});
   }
 
+  if(!["decision","file","download"].includes(action))return res.status(400).json({error:"Invalid action"});
   if(action==="decision"&&!["approved","rejected"].includes(decision)){
     return res.status(400).json({error:"Invalid quote decision"});
   }
 
   try{
     const q=await fetch(
-      U+"/rest/v1/quotes?id=eq."+quoteId+"&select=id,request_id,visible_to_client,file_storage_path",
+      U+"/rest/v1/quotes?id=eq."+quoteId+"&select=id,request_id,visible_to_client,file_storage_path,quote_file_name",
       {headers:{apikey:secret,Authorization:"Bearer "+secret}}
     );
     if(!q.ok) throw new Error(await q.text());
@@ -51,7 +52,7 @@ export default async function handler(req,res){
     const owned=await own.json();
     if(!owned.length||quote.visible_to_client!==true) return res.status(403).json({error:"You do not have access to this quote"});
 
-    if(action==="file"){
+    if(action==="file"||action==="download"){
       if(!quote.file_storage_path) return res.status(404).json({error:"No quote document is attached"});
 
       const path=String(quote.file_storage_path);
@@ -78,7 +79,11 @@ export default async function handler(req,res){
         url=U+"/storage/v1"+url;
       }
 
-      return res.status(200).json({url});
+      if(!url)return res.status(502).json({error:"Document link unavailable"});
+      const signedUrl=new URL(url);
+      if(signedUrl.origin!==U)return res.status(502).json({error:"Unexpected document host"});
+      if(action==="download")signedUrl.searchParams.set("download",String(quote.quote_file_name||"quotation.pdf").replace(/[\\/\r\n"<>]/g,"_").slice(0,150));
+      return res.status(200).json({url:signedUrl.toString()});
     }
 
     const update=await fetch(
