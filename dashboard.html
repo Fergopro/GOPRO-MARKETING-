@@ -1377,8 +1377,9 @@
                         <div class="quote-actions-client">
                           ${quote.file_storage_path ? `
                             <button type="button" class="quote-btn open js-open-quote" data-quote-id="${quote.id}">
-                              Open quote
+                              View PDF
                             </button>
+                            <button type="button" class="quote-btn open js-download-quote" data-quote-id="${quote.id}">Download PDF</button>
                           ` : ""}
 
                           <span class="quote-decision">${escapeHtml(decision)}</span>
@@ -1678,31 +1679,29 @@
     }
 
 
+    const downloadButton=event.target.closest(".js-download-quote");
+    if(downloadButton){
+      const tab=window.open("about:blank","_blank");
+      try{
+        const result=await clientQuoteAction({action:"download",quote_id:Number(downloadButton.dataset.quoteId)});
+        if(!result?.url)throw new Error("The quotation download is unavailable.");
+        if(tab)tab.location.replace(result.url);
+        else window.location.assign(result.url);
+      }catch(error){if(tab)tab.close();alert(error.message||"Unable to download quotation.");}
+      return;
+    }
+
     const openQuoteButton =
       event.target.closest(".js-open-quote");
 
     if (openQuoteButton) {
-      try {
-        const result =
-          await clientQuoteAction({
-            action: "file",
-            quote_id:
-              Number(
-                openQuoteButton.dataset.quoteId
-              )
-          });
-
-        if (result?.url) {
-          window.open(
-            result.url,
-            "_blank",
-            "noopener,noreferrer"
-          );
-        }
-
-      } catch (error) {
-        alert(error.message);
-      }
+      const tab=window.open("about:blank","_blank");
+      try{
+        const result=await clientQuoteAction({action:"file",quote_id:Number(openQuoteButton.dataset.quoteId)});
+        if(!result?.url)throw new Error("The quotation PDF is unavailable.");
+        if(tab)tab.location.replace(result.url);
+        else window.location.assign(result.url);
+      }catch(error){if(tab)tab.close();alert(error.message||"Unable to open quotation.");}
 
       return;
     }
