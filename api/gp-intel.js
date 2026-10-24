@@ -49,6 +49,12 @@ export default async function handler(req,res){
  if(!user)return res.status(403).json({error:"Administrator access required"});
  try{
   if(req.method==="GET"){
+   const reportId=Number(req.query?.id);
+   if(Number.isSafeInteger(reportId)&&reportId>0){
+    const found=await get(secret,"gp_intel_reports?select=id,request_id,brief,supplier_research,assessment,sources,created_at&id=eq."+reportId+"&admin_user_id=eq."+encodeURIComponent(user.id)+"&limit=1");
+    if(!found.length)return res.status(404).json({error:"Report not found"});
+    return res.status(200).json({report:found[0]});
+   }
    const rows=await get(secret,"gp_intel_reports?select=id,request_id,brief,created_at,status,research_model,analysis_model&admin_user_id=eq."+encodeURIComponent(user.id)+"&order=created_at.desc&limit=30");
    return res.status(200).json({reports:rows});
   }
