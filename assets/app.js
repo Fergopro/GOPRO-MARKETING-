@@ -663,29 +663,13 @@ if (form) {
         return;
       }
 
-      const response = await fetch(
-        `${GP.supabaseUrl}/rest/v1/leads`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-            apikey: GP.supabaseKey,
-            Authorization: `Bearer ${GP.supabaseKey}`,
-            Prefer: "return=minimal"
-          },
-
-          body: JSON.stringify({
-            name: formData.get("name"),
-            email: formData.get("email"),
-            phone: formData.get("phone"),
-            company: formData.get("company"),
-            enquiry_type: formData.get("enquiry_type"),
-            message: formData.get("message"),
-            source: "main-website-contact"
-          })
-        }
-      );
+      await initPortalAuth();
+      const {data:{session}}=await portalSupabase.auth.getSession();
+      if(!session){window.location.assign("login.html?next=contact.html");return;}
+      const response=await fetch("/api/contact-enquiry",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},
+        body:JSON.stringify(Object.fromEntries(formData.entries()))
+      });
 
       if (!response.ok) {
         throw new Error(await response.text());
