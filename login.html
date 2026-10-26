@@ -741,6 +741,11 @@
   }
 
 
+  const nextPage=new URLSearchParams(location.search).get("next");
+  const safeNext=nextPage==="contact.html"?"contact.html":nextPage==="index.html"?"index.html":"dashboard.html";
+  function postLoginDestination(){return safeNext;}
+  function authReturnUrl(){return currentBaseURL()+"/login.html"+(safeNext==="dashboard.html"?"":"?next="+encodeURIComponent(safeNext));}
+
   function currentBaseURL() {
 
     return (

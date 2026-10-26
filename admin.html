@@ -13,6 +13,7 @@
     <div class="admin-badge">ADMIN CONTROL</div>
     <nav class="nav">
       <a class="active" href="admin.html">Procurements</a>
+      <a href="gp-intel.html">GP-INTEL Research</a>
       <a href="#testimonials-manager">Testimonials</a>
       <a href="dashboard.html">Client View</a>
       <a href="index.html">Procurement AI</a>
@@ -35,7 +36,7 @@
 
     <div id="notice" class="notice"></div>
 
-    <section class="opsbar">
+    <section class="opsbar"><select id="inboxView" class="filter-select" aria-label="Admin records view"><option value="new">New inbox only</option><option value="all">All history</option></select>
       <div class="searchbox">
         <span>⌕</span>
         <input id="requestSearch" type="search" placeholder="Search GP number, client, category, location or requirement">
@@ -71,12 +72,12 @@
 
     <div class="grid">
       <section class="panel">
-        <div class="panel-head"><h2>All Procurement Requests</h2><span id="reqCount">Loading...</span></div>
+        <div class="panel-head"><h2>Procurement Requests</h2><span id="reqCount">Loading...</span></div>
         <div id="requests"><div class="empty">Loading procurement activity...</div></div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Recent Leads</h2><span>Latest 50</span></div>
+        <div class="panel-head"><h2>Website Leads</h2><span id="leadCount">New inbox</span></div>
         <div id="leads"><div class="empty">Loading leads...</div></div>
       </section>
     </div>

@@ -94,6 +94,11 @@ export default async function handler(req, res) {
     });
   }
 
+  const auth=String(req.headers.authorization||"");
+  if(!auth.startsWith("Bearer "))return res.status(401).json({error:"Sign in required to use procurement AI."});
+  const r=await fetch(SUPABASE_URL+"/auth/v1/user",{headers:{apikey:"sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI",Authorization:auth}});
+  if(!r.ok)return res.status(401).json({error:"Sign in required."});
+  const verifiedUser=await r.json();if(!verifiedUser?.id)return res.status(401).json({error:"Sign in required."});
   const body = req.body || {};
 
   if (
@@ -119,7 +124,7 @@ export default async function handler(req, res) {
   }
 
   const name = clean(body.name, 150);
-  const email = clean(body.email, 254);
+  const email = clean(verifiedUser.email, 254);
   const phone = clean(body.phone, 50);
   const company = clean(body.company, 150);
 

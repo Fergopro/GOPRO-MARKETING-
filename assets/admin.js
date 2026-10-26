@@ -95,6 +95,9 @@ async function boot(){
   }
 }
 
+const INBOX_CUTOFF="2026-10-26T12:25:00Z";
+function inNewInbox(row){return Date.parse(row.created_at||0)>=Date.parse(INBOX_CUTOFF);}
+function showHistory(){return document.getElementById("inboxView")?.value==="all";}
 async function load(){
   db=await call();
 
@@ -111,7 +114,8 @@ async function load(){
 
   renderRequests();
 
-  const leads=db.leads||[];
+  const leads=showHistory()?(db.leads||[]):(db.leads||[]).filter(inNewInbox);
+  if($("leadCount"))$("leadCount").textContent=leads.length+" lead"+(leads.length===1?"":"s");
 
   $("leads").innerHTML=leads.length
     ? leads.map(l=>
@@ -135,6 +139,7 @@ function filteredRequests(){
   const qs=db?.quotes||[];
 
   return (db?.requests||[]).filter(r=>{
+    if(!showHistory()&&!inNewInbox(r))return false;
     const haystack=[
       "GP-"+r.id,
       r.client_name,
@@ -628,6 +633,8 @@ function openRequest(id){
     renderRequests
   );
 });
+
+$("inboxView")?.addEventListener("change",()=>{renderRequests();const leads=showHistory()?(db?.leads||[]):(db?.leads||[]).filter(inNewInbox);$("leadCount").textContent=leads.length+" leads";$("leads").innerHTML=leads.length?leads.map(l=>'<div class="lead"><strong>'+esc(l.name||l.company||l.email||"Unidentified lead")+'</strong><span>'+esc(l.status||"")+' · '+fmt(l.created_at)+'</span><p>'+esc(l.message||"")+'</p></div>').join(""):'<div class="empty">No new leads. Historical records remain in All history.</div>';});
 
 $("closeDrawer").onclick=()=>{
   $("drawer").classList.remove("open");
