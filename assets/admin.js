@@ -114,7 +114,8 @@ async function load(){
 
   renderRequests();
 
-  const leads=showHistory()?(db.leads||[]):(db.leads||[]).filter(inNewInbox);\n  if($("leadCount"))$("leadCount").textContent=leads.length+" lead"+(leads.length===1?"":"s");
+  const leads=showHistory()?(db.leads||[]):(db.leads||[]).filter(inNewInbox);
+  if($("leadCount"))$("leadCount").textContent=leads.length+" lead"+(leads.length===1?"":"s");
 
   $("leads").innerHTML=leads.length
     ? leads.map(l=>
@@ -137,7 +138,8 @@ function filteredRequests(){
   const quoteState=String($("quoteFilter")?.value||"");
   const qs=db?.quotes||[];
 
-  return (db?.requests||[]).filter(r=>{\n    if(!showHistory()&&!inNewInbox(r))return false;
+  return (db?.requests||[]).filter(r=>{
+    if(!showHistory()&&!inNewInbox(r))return false;
     const haystack=[
       "GP-"+r.id,
       r.client_name,
