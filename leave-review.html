@@ -113,12 +113,12 @@ stars.forEach(input=>input.addEventListener("change",colorStars));
 form.addEventListener("submit",async event=>{
   event.preventDefault();
   if(button.disabled||!form.reportValidity())return;
-  const name=form.name.value.trim(),company=form.company.value.trim(),message=form.message.value.trim();
+  const name=form.elements.namedItem("name").value.trim(),company=form.elements.namedItem("company").value.trim(),message=form.elements.namedItem("message").value.trim();
   const rating=Number(form.querySelector('input[name="rating"]:checked')?.value||0);
-  if(name.length<2||name.length>120||company.length>160||message.length<10||message.length>2000||rating<1||rating>5||!form.consent.checked){
+  if(name.length<2||name.length>120||company.length>160||message.length<10||message.length>2000||rating<1||rating>5||!document.querySelector("#consent").checked){
     alertMessage("Please complete all required fields and confirm permission to publish.",true);return;
   }
-  if(form.website.value.trim()){form.hidden=true;document.querySelector("#success").style.display="block";return;}
+  if(form.elements.namedItem("website").value.trim()){form.hidden=true;document.querySelector("#success").style.display="block";return;}
   if(Date.now()-started<1800){alertMessage("Please take a moment to review your testimonial before submitting.",true);return;}
   button.disabled=true;button.textContent="Submitting your review…";alertMessage("Saving your feedback…");
   try{
