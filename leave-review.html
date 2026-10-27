@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Share your experience working with GoProcures. Customer testimonials are reviewed before publication.">
+  <title>Leave a Review | GoProcures</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#070b19;color:#f4f5ff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 80% -5%,rgba(99,67,185,.22),transparent 45%),radial-gradient(ellipse at 0% 70%,rgba(48,113,225,.1),transparent 45%),#070b19}
+    .wrap{max-width:950px;margin:auto;padding:28px 22px 55px}
+    .header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:42px}
+    .logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:#f4f5ff;font-size:20px;font-weight:800;letter-spacing:-.6px}
+    .mark{display:grid;place-items:center;width:43px;height:43px;border-radius:12px;background:linear-gradient(135deg,#9151fa,#467fff);font-size:14px;letter-spacing:0}
+    .back{color:#bfcfff;text-decoration:none;font-size:13px}
+    .back:hover,.back:focus-visible{text-decoration:underline}
+    .intro{text-align:center;max-width:690px;margin:0 auto 30px}
+    .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2.2px;color:#baa6ff;font-weight:800;margin-bottom:13px}
+    h1{font-size:clamp(31px,5vw,52px);letter-spacing:-1.7px;line-height:1.12;margin:0 0 18px}
+    .intro p{color:#aab9d5;line-height:1.7;font-size:16px;margin:0}
+    .card{max-width:700px;margin:auto;padding:clamp(22px,4vw,40px);background:linear-gradient(160deg,rgba(18,27,51,.96),rgba(12,17,35,.98));border:1px solid #2b3859;border-radius:22px;box-shadow:0 25px 65px rgba(0,0,0,.2)}
+    label{display:block;font-size:13px;font-weight:700;color:#d6dcf3;margin:19px 0 9px}
+    label:first-child{margin-top:0}
+    input,select,textarea{display:block;width:100%;border:1px solid #394865;background:#080f21;border-radius:12px;color:#f4f7ff;padding:14px 15px;font:inherit;font-size:15px;outline-offset:2px}
+    input:focus,select:focus,textarea:focus{border-color:#9177ff;box-shadow:0 0 0 3px rgba(143,113,245,.13)}
+    textarea{min-height:155px;resize:vertical;line-height:1.7}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .subtle{font-size:12px;color:#91a3c4;line-height:1.6}
+    .stars{display:inline-flex;gap:10px;margin:4px 0 5px}
+    .stars label{margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;color:#637191;font-size:29px;min-width:33px;transition:color .12s}
+    .stars input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer}
+    .stars label:has(input:checked),.stars label:focus-within{color:#fac86d}
+    .stars label:has(input:focus-visible){outline:2px solid #bba5ff;outline-offset:4px;border-radius:4px}
+    .rating-text{font-size:12px;color:#afc2e1;margin:4px 0 12px}
+    .consent{display:flex;align-items:flex-start;gap:12px;margin:20px 0 24px}
+    .consent input{width:19px;height:19px;flex:0 0 19px;margin:2px 0 0;accent-color:#8961ff}
+    .consent label{margin:0;color:#b9c7df;font-weight:500;font-size:13px;line-height:1.65}
+    button{width:100%;border:none;border-radius:12px;background:linear-gradient(105deg,#8b52ff,#477fff);color:white;padding:15px 19px;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 12px 30px rgba(74,67,203,.23)}
+    button:disabled{opacity:.56;cursor:wait}
+    button:hover:not(:disabled){filter:brightness(1.08)}
+    .feedback{min-height:19px;color:#a9f5d2;font-size:13px;margin:16px 0 0;line-height:1.5}
+    .feedback.error{color:#ffc4c4}
+    .success{display:none;text-align:center;padding:32px 4px}
+    .success .check{display:grid;place-items:center;width:70px;height:70px;border-radius:50%;border:1px solid #4aab91;background:#103a36;color:#a2ffd3;font-size:31px;margin:0 auto 24px}
+    .success h2{font-size:27px;letter-spacing:-.7px}
+    .success p{color:#bdcce4;line-height:1.7}
+    .success a{color:#b8c4ff}
+    footer{text-align:center;color:#7887a7;font-size:12px;padding:32px 10px}
+    .honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+    @media(max-width:600px){.two{grid-template-columns:1fr;gap:0}.header{margin-bottom:31px}.wrap{padding:18px 15px 25px}.card{border-radius:17px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <a class="logo" href="/"><span class="mark">GP</span>GoProcures</a>
+    <a class="back" href="/">← Back to website</a>
+  </header>
+  <section class="intro">
+    <div class="eyebrow">Customer feedback</div>
+    <h1>How was your GoProcures experience?</h1>
+    <p>Your feedback helps other companies understand our procurement services. You can share your experience in a few minutes—no customer account required.</p>
+  </section>
+  <div class="card">
+    <form id="reviewForm">
+      <div class="two">
+        <div><label for="customerName">Your name *</label><input id="customerName" name="name" autocomplete="name" required minlength="2" maxlength="120" placeholder="Your full name"></div>
+        <div><label for="company">Company (optional)</label><input id="company" name="company" autocomplete="organization" maxlength="160" placeholder="Company name"></div>
+      </div>
+      <label id="ratingLabel">Your rating *</label>
+      <div class="stars" role="radiogroup" aria-labelledby="ratingLabel">
+        <label title="1 star"><input type="radio" name="rating" value="1" aria-label="1 star" required>★</label>
+        <label title="2 stars"><input type="radio" name="rating" value="2" aria-label="2 stars">★</label>
+        <label title="3 stars"><input type="radio" name="rating" value="3" aria-label="3 stars">★</label>
+        <label title="4 stars"><input type="radio" name="rating" value="4" aria-label="4 stars">★</label>
+        <label title="5 stars"><input type="radio" name="rating" value="5" aria-label="5 stars">★</label>
+      </div>
+      <p class="rating-text" id="ratingText">Select 1–5 stars</p>
+      <label for="review">Your testimonial *</label>
+      <textarea id="review" name="message" required minlength="10" maxlength="2000" placeholder="Tell us about your sourcing request, service, communication, delivery or savings."></textarea>
+      <p class="subtle">Please share your genuine experience. Avoid including confidential prices, phone numbers or personal details you do not want published.</p>
+      <div class="honeypot" aria-hidden="true"><label for="website">Leave blank</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="consent"><input type="checkbox" id="consent" required><label for="consent">I confirm this is my genuine experience and agree that GoProcures may display my review, name, rating and company (if provided) publicly after review and approval.</label></div>
+      <button id="submitButton" type="submit">Submit my review</button>
+      <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+      <p class="subtle">Your testimonial will not appear publicly until approved by the GoProcures team.</p>
+    </form>
+    <div class="success" id="success" role="status">
+      <div class="check">✓</div>
+      <h2>Thank you for your review!</h2>
+      <p>Your feedback has been received and submitted for approval. We appreciate you taking the time to share your experience.</p>
+      <p><a href="/">Return to GoProcures</a></p>
+    </div>
+  </div>
+  <footer>© GoProcures · You Ask. We Get. · <a class="back" href="https://goprocureit.com">goprocureit.com</a></footer>
+</div>
+<script type="module">
+const URL="https://oulckllygepbqbctzeka.supabase.co";
+const KEY="sb_publishable_uX1OBnvFiTFQqs4ZDBtifQ_aGQsLtAI";
+const form=document.querySelector("#reviewForm"),button=document.querySelector("#submitButton");
+const feedback=document.querySelector("#feedback"),ratingText=document.querySelector("#ratingText");
+const stars=[...document.querySelectorAll('input[name="rating"]')];
+let started=Date.now();
+function alertMessage(message,error=false){feedback.textContent=message;feedback.classList.toggle("error",error);}
+function colorStars(){
+  const selected=Number(form.querySelector('input[name="rating"]:checked')?.value||0);
+  ratingText.textContent=selected?selected+" out of 5 stars":"Select 1–5 stars";
+  stars.forEach(i=>{i.parentElement.style.color=Number(i.value)<=selected?"#fac86d":"#637191";});
+}
+stars.forEach(input=>input.addEventListener("change",colorStars));
+form.addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(button.disabled||!form.reportValidity())return;
+  const name=form.name.value.trim(),company=form.company.value.trim(),message=form.message.value.trim();
+  const rating=Number(form.querySelector('input[name="rating"]:checked')?.value||0);
+  if(name.length<2||name.length>120||company.length>160||message.length<10||message.length>2000||rating<1||rating>5||!form.consent.checked){
+    alertMessage("Please complete all required fields and confirm permission to publish.",true);return;
+  }
+  if(form.website.value.trim()){form.hidden=true;document.querySelector("#success").style.display="block";return;}
+  if(Date.now()-started<1800){alertMessage("Please take a moment to review your testimonial before submitting.",true);return;}
+  button.disabled=true;button.textContent="Submitting your review…";alertMessage("Saving your feedback…");
+  try{
+    const response=await fetch(URL+"/rest/v1/testimonials",{
+      method:"POST",
+      headers:{"Content-Type":"application/json",apikey:KEY,Prefer:"return=minimal"},
+      body:JSON.stringify({name,company:company||null,message,rating,approved:false})
+    });
+    if(!response.ok)throw new Error("Your review could not be saved. Please try again.");
+    form.hidden=true;
+    document.querySelector("#success").style.display="block";
+    document.querySelector("#success").focus?.();
+  }catch(err){alertMessage(err.message||"Submission failed. Please retry.",true);}
+  finally{button.disabled=false;button.textContent="Submit my review";}
+});
+</script>
+</body>
+</html>
