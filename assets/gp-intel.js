@@ -29,8 +29,42 @@ function draftUrl(provider,email){
  if(provider==="gmail")return "https://mail.google.com/mail/?view=cm&fs=1&"+p.toString();
  return "https://outlook.office.com/mail/deeplink/compose?"+new URLSearchParams({to:email,subject,body}).toString();
 }
+function collectSupplierEmails(suppliers){
+ const unique=new Map();
+ for(const supplier of Array.isArray(suppliers)?suppliers:[]){
+  const email=String(supplier?.email||"").trim();
+  const source=String(supplier?.email_source||"").trim();
+  if(!mailTarget(email)||!/^https?:\/\//i.test(source))continue;
+  const key=email.toLowerCase();
+  if(!unique.has(key))unique.set(key,email);
+ }
+ return [...unique.values()];
+}
+function refreshSupplierEmailButton(report){
+ const emails=collectSupplierEmails(report?.suppliers);
+ const button=$("copySupplierEmails");
+ if(button){
+  button.disabled=emails.length===0;
+  button.textContent="Copy All Supplier Emails ("+emails.length+")";
+  button.title=emails.length?"Copy "+emails.length+" unique, source-backed email addresses":"No source-backed supplier email addresses in this report";
+ }
+ $("supplierEmailFeedback").textContent=emails.length
+  ?emails.length+" unique sourced email"+(emails.length===1?"":"s")+" available. Verify recipients before contacting them."
+  :"No sourced supplier emails available in this report.";
+}
+$("copySupplierEmails")?.addEventListener("click",async()=>{
+ const emails=collectSupplierEmails(latest?.suppliers);
+ if(!emails.length){$("supplierEmailFeedback").textContent="No source-backed supplier emails to copy.";return;}
+ try{
+  await navigator.clipboard.writeText(emails.join("; "));
+  $("supplierEmailFeedback").textContent=emails.length+" supplier email"+(emails.length===1?"":"s")+" copied. Paste into BCC for privacy, or send individual RFQs.";
+ }catch{
+  $("supplierEmailFeedback").textContent="Clipboard access was blocked. Open this page over HTTPS and allow clipboard permission.";
+ }
+});
 function renderSuppliers(report){
  const root=$("supplierCards");root.replaceChildren();
+ refreshSupplierEmailButton(report);
  const list=report.suppliers||[];$("supplierCount").textContent=list.length+" potential supplier"+(list.length===1?"":"s");
  $("supplierResearchNote").textContent=report.research_note||"These supplier leads require independent checks before use.";
  if(!list.length){root.append(make("p","muted","No sufficiently evidenced supplier leads were returned. Try another location or more precise specifications."));return;}
